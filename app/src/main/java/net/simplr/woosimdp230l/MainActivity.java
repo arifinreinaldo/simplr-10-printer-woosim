@@ -1,5 +1,6 @@
 package net.simplr.woosimdp230l;
 
+import android.Manifest;
 import android.bluetooth.BluetoothDevice;
 import android.content.Context;
 import android.content.Intent;
@@ -17,6 +18,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 
 import com.dascom.print.connection.BluetoothConnection;
 import com.dascom.print.utils.BluetoothUtils;
+import com.permissionx.guolindev.PermissionX;
 
 import net.simplr.woosimdp230l.databinding.ActivityMainBinding;
 import net.simplr.woosimdp230l.sunmi.BluetoothUtil;
@@ -108,15 +110,22 @@ public class MainActivity extends AppCompatActivity implements MainPresenter.Vie
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
         sp = getSharedPreferences(sp_file, Context.MODE_PRIVATE);
-        presenter = new MainPresenter(this, sp);
-        adapter = new AdapterDevice(this, listDevice);
-        adapter.setClickListener((view, position) -> {
-                    Toast.makeText(getBaseContext(), "Address selected", Toast.LENGTH_SHORT).show();
-                    presenter.saveBluetoothAddress(adapter.getItem(position).getAddress());
-                }
-        );
-        Log.d("Printer", "onCreate: ");
-        presenter.verifyESCPOS();
+        PermissionX.init(this).permissions(Manifest.permission.BLUETOOTH_SCAN, Manifest.permission.BLUETOOTH_CONNECT, Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION)
+                .request((allGranted, grantedList, deniedList) -> {
+                    if (allGranted) {
+                        presenter = new MainPresenter(this, sp);
+                        adapter = new AdapterDevice(this, listDevice);
+                        adapter.setClickListener((view, position) -> {
+                                    Toast.makeText(getBaseContext(), "Address selected", Toast.LENGTH_SHORT).show();
+                                    presenter.saveBluetoothAddress(adapter.getItem(position).getAddress());
+                                }
+                        );
+                        Log.d("Printer", "onCreate: ");
+                        presenter.verifyESCPOS();
+                    } else {
+                        Toast.makeText(this, "These permissions are denied", Toast.LENGTH_LONG).show();
+                    }
+                });
     }
 
     private void registerAddress() {
