@@ -20,6 +20,10 @@ import com.dantsu.escposprinter.textparser.PrinterTextParserImg;
 import com.dascom.print.ZPL;
 import com.dascom.print.utils.BluetoothUtils;
 import com.woosim.printer.WoosimCmd;
+import com.zebra.sdk.comm.ConnectionException;
+import com.zebra.sdk.printer.ZebraPrinter;
+import com.zebra.sdk.printer.ZebraPrinterFactory;
+import com.zebra.sdk.printer.ZebraPrinterLanguageUnknownException;
 
 import net.simplr.woosimdp230l.sunmi.SunmiPrintHelper;
 
@@ -66,6 +70,8 @@ public class MainPresenter {
     int index = 0;
     String mac = "";
     int retry = 0;
+    ZebraPrinter instance;
+    com.zebra.sdk.comm.BluetoothConnection zebraConn;
 
     MainPresenter(View view, SharedPreferences sp) {
         this.view = view;
@@ -329,7 +335,8 @@ public class MainPresenter {
             view.showESCTesting();
         } else {
             view.registerBluetooth();
-        } ;
+        }
+        ;
     }
 
     public void printESCText() {
@@ -428,5 +435,38 @@ public class MainPresenter {
         void showESCTesting();
 
         void registerBluetooth();
+    }
+
+    public void connectZebra() throws ZebraPrinterLanguageUnknownException, ConnectionException {
+        String savedMac = spData.getString(sp_mac, "");
+        BluetoothPrintersConnections bluetoothConnection = new BluetoothPrintersConnections();
+        BluetoothConnection[] list = bluetoothConnection.getList();
+        BluetoothConnection selectedDevice = null;
+        for (int i = 0; i < list.length; i++) {
+            BluetoothConnection con = list[i];
+            if (con.getDevice().getAddress().equals(savedMac)) {
+                selectedDevice = con;
+            }
+        }
+
+        if (selectedDevice == null) {
+            view.showError("Bluetooth is not found");
+        } else {
+            zebraConn = new com.zebra.sdk.comm.BluetoothConnection(savedMac);
+            zebraConn.open();
+            instance = ZebraPrinterFactory.getInstance(zebraConn);
+        }
+    }
+
+    public void sendZebraCommand(String command) throws ConnectionException {
+        instance.sendCommand(command);
+    }
+
+    public void closeZebraCommand() throws ConnectionException {
+        if (instance != null) {
+            zebraConn.close();
+            zebraConn = null;
+            instance = null;
+        }
     }
 }

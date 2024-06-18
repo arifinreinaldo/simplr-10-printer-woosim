@@ -19,6 +19,8 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import com.dascom.print.connection.BluetoothConnection;
 import com.dascom.print.utils.BluetoothUtils;
 import com.permissionx.guolindev.PermissionX;
+import com.zebra.sdk.comm.ConnectionException;
+import com.zebra.sdk.printer.ZebraPrinterLanguageUnknownException;
 
 import net.simplr.woosimdp230l.databinding.ActivityMainBinding;
 import net.simplr.woosimdp230l.sunmi.BluetoothUtil;
@@ -110,22 +112,20 @@ public class MainActivity extends AppCompatActivity implements MainPresenter.Vie
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
         sp = getSharedPreferences(sp_file, Context.MODE_PRIVATE);
-        PermissionX.init(this).permissions(Manifest.permission.BLUETOOTH_SCAN, Manifest.permission.BLUETOOTH_CONNECT, Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION)
-                .request((allGranted, grantedList, deniedList) -> {
-                    if (allGranted) {
-                        presenter = new MainPresenter(this, sp);
-                        adapter = new AdapterDevice(this, listDevice);
-                        adapter.setClickListener((view, position) -> {
-                                    Toast.makeText(getBaseContext(), "Address selected", Toast.LENGTH_SHORT).show();
-                                    presenter.saveBluetoothAddress(adapter.getItem(position).getAddress());
-                                }
-                        );
-                        Log.d("Printer", "onCreate: ");
-                        presenter.verifyESCPOS();
-                    } else {
-                        Toast.makeText(this, "These permissions are denied", Toast.LENGTH_LONG).show();
-                    }
+        PermissionX.init(this).permissions(Manifest.permission.BLUETOOTH_SCAN, Manifest.permission.BLUETOOTH_CONNECT, Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION).request((allGranted, grantedList, deniedList) -> {
+            if (allGranted) {
+                presenter = new MainPresenter(this, sp);
+                adapter = new AdapterDevice(this, listDevice);
+                adapter.setClickListener((view, position) -> {
+                    Toast.makeText(getBaseContext(), "Address selected", Toast.LENGTH_SHORT).show();
+                    presenter.saveBluetoothAddress(adapter.getItem(position).getAddress());
                 });
+                Log.d("Printer", "onCreate: ");
+                presenter.verifyESCPOS();
+            } else {
+                Toast.makeText(this, "These permissions are denied", Toast.LENGTH_LONG).show();
+            }
+        });
     }
 
     private void registerAddress() {
@@ -260,11 +260,44 @@ public class MainActivity extends AppCompatActivity implements MainPresenter.Vie
     public void showESCTesting() {
         binding.loading.setVisibility(View.GONE);
         binding.escpos.setVisibility(View.VISIBLE);
+        //ESC Tester
+//        binding.btn1.setOnClickListener(view -> {
+//            presenter.printESCText();
+//        });
+//        binding.btn2.setOnClickListener(view -> {
+//            presenter.printESCImage(this.getApplicationContext());
+//        });
+        //ZPL Printing
+        List<String> commands = new ArrayList<>();
+        commands.add("^XA");
+        commands.add("^PW609");
+        commands.add("^LL0812");
+        commands.add("^LS0");
+        commands.add("^FT591,36^A0I,56,55^FH\\^FDKiri Bawah^FS");
+        commands.add("^FT256,735^A0I,56,55^FH\\^FDKanan Atas^FS");
+        commands.add("^BY5,3,169^FT549,400^BCI,,Y,N");
+        commands.add("^FD>;123456789012^FS");
+        commands.add("^FO13,221^GB575,0,8^FS");
+        commands.add("^FO35,648^GB556,0,8^FS");
+        commands.add("^XZ");
         binding.btn1.setOnClickListener(view -> {
-            presenter.printESCText();
-        });
-        binding.btn2.setOnClickListener(view -> {
-            presenter.printESCImage(this.getApplicationContext());
+            PermissionX.init(this).permissions(Manifest.permission.BLUETOOTH_SCAN, Manifest.permission.BLUETOOTH_CONNECT, Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION).request((allGranted, grantedList, deniedList) -> {
+                if (allGranted) {
+                    try {
+                        presenter.connectZebra();
+                        for (int i = 0; i < commands.size(); i++) {
+                            presenter.sendZebraCommand(commands.get(i));
+                        }
+                        presenter.closeZebraCommand();
+                    } catch (ZebraPrinterLanguageUnknownException e) {
+                        throw new RuntimeException(e);
+                    } catch (ConnectionException e) {
+                        Toast.makeText(getApplicationContext(), e.getMessage(), Toast.LENGTH_SHORT).show();
+                    }
+                } else {
+                    Toast.makeText(this, String.join(",", deniedList), Toast.LENGTH_SHORT).show();
+                }
+            });
         });
     }
 

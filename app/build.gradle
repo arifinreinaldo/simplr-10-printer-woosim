@@ -33,6 +33,7 @@ dependencies {
     implementation 'androidx.appcompat:appcompat:1.6.1'
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
     implementation files('libs/dascom2.5.4.6620.jar')
+    implementation files('libs/ZSDK_ANDROID_API.jar')
     implementation files('libs/WoosimLib261.jar')
     implementation files('libs/oneil_lib_2.4.9.aar')
     implementation 'com.google.zxing:core:3.5.3'
