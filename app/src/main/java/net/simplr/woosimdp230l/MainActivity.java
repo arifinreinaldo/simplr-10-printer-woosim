@@ -319,6 +319,7 @@ public class MainActivity extends AppCompatActivity implements MainPresenter.Vie
         commands.add("^PQ1,0,1,Y");
         commands.add("^XZ");
         binding.btn1.setOnClickListener(view -> {
+            //ZPL method
             PermissionX.init(this).permissions(Manifest.permission.BLUETOOTH_SCAN, Manifest.permission.BLUETOOTH_CONNECT, Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION).request((allGranted, grantedList, deniedList) -> {
                 if (allGranted) {
                     try {
@@ -345,6 +346,10 @@ public class MainActivity extends AppCompatActivity implements MainPresenter.Vie
                     Toast.makeText(this, String.join(",", deniedList), Toast.LENGTH_SHORT).show();
                 }
             });
+        });
+        binding.btn2.setOnClickListener(view -> {
+            //CPCL function
+            presenter.testCPCLIMage(getAssetData("cp.png"));
         });
     }
 
