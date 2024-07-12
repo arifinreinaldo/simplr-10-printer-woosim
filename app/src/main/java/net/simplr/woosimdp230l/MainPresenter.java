@@ -20,6 +20,7 @@ import com.dantsu.escposprinter.textparser.PrinterTextParserImg;
 import com.dascom.print.ZPL;
 import com.dascom.print.utils.BluetoothUtils;
 import com.woosim.printer.WoosimCmd;
+import com.zebra.sdk.comm.Connection;
 import com.zebra.sdk.comm.ConnectionException;
 import com.zebra.sdk.printer.ZebraPrinter;
 import com.zebra.sdk.printer.ZebraPrinterFactory;
@@ -39,6 +40,9 @@ import honeywell.connection.ConnectionBase;
 import honeywell.connection.Connection_Bluetooth;
 import honeywell.printer.DocumentEZ;
 import honeywell.printer.DocumentLP;
+import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
+import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 
 public class MainPresenter {
     String TAG = "Dascom";
@@ -468,5 +472,27 @@ public class MainPresenter {
             zebraConn = null;
             instance = null;
         }
+    }
+
+    public void testCPCLIMage(Bitmap bmp) {
+        Single.fromCallable(() -> {
+            String savedMac = spData.getString(sp_mac, "");
+            ParseBitmap parse = new ParseBitmap(bmp);
+            String data = parse.ExtractGraphicsDataForCPCL(0, 0);
+            Connection con = new com.zebra.sdk.comm.BluetoothConnection(savedMac);
+            con.open();
+            String zplData = "! 0 200 200 230 1\r\n"
+                    + data
+                    + "PRINT\r\n";
+            con.write(zplData.getBytes());
+            con.close();
+            return zplData;
+        }).subscribeOn(Schedulers.io()).observeOn(AndroidSchedulers.mainThread()).subscribe(t -> {
+                    Log.d(TAG, "testCPCLIMage: " + t);
+                },
+                throwable -> {
+                    Log.d(TAG, "testCPCLIMage: " + throwable.getMessage());
+                });
+
     }
 }

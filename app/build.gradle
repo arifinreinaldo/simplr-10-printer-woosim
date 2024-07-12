@@ -37,6 +37,8 @@ dependencies {
     implementation files('libs/WoosimLib261.jar')
     implementation files('libs/oneil_lib_2.4.9.aar')
     implementation 'com.google.zxing:core:3.5.3'
+    implementation 'io.reactivex.rxjava3:rxjava:3.1.8'
+    implementation 'io.reactivex.rxjava3:rxandroid:3.0.2'
     implementation 'com.github.DantSu:ESCPOS-ThermalPrinter-Android:3.3.0'
     implementation 'com.guolindev.permissionx:permissionx:1.7.1'
     implementation 'com.sunmi:printerlibrary:1.0.18'
