@@ -299,10 +299,11 @@ public class MainActivity extends AppCompatActivity implements MainPresenter.Vie
 //        });
         //ZPL Printing
         //^MNT is for black gap
+        //POI to invert PON for normal label
         String[] params = param.split(";");
         List<String> commands = new ArrayList<>();
         commands.add("CT~~CD,~CC^~CT~");
-        commands.add("^XA~TA000~JSN^LT0^MNT^MTD^PON^PMN^LH0,0^JMA^PR3,3~SD10^JUS^LRN^CI0^XZ");
+        commands.add("^XA~TA000~JSN^LT0^MNT^MTD^POI^PMN^LH0,0^JMA^PR3,3~SD10^JUS^LRN^CI0^XZ");
         commands.add("^XA");
         commands.add("^MMT");
         commands.add("^PW609");
