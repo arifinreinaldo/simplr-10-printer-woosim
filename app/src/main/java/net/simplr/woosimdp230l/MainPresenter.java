@@ -332,7 +332,7 @@ public class MainPresenter {
     public void verifyESCPOS() {
         String savedMac = spData.getString(sp_mac, "");
         if (!savedMac.isEmpty()) {
-            view.showESCTesting();
+            view.registerBluetooth();
         } else {
             view.registerBluetooth();
         }
@@ -433,6 +433,8 @@ public class MainPresenter {
         Bitmap getAssetData(String fileName);
 
         void showESCTesting();
+
+        void printZPL(String param);
 
         void registerBluetooth();
     }

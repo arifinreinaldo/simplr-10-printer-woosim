@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(/C:\\Users\\Reinaldo\\AndroidStudioProjects\\printer-woosim\\app\\src\\main/**)",
+      "Read(/C:\\Users\\Reinaldo\\AndroidStudioProjects\\printer-woosim\\app\\src\\main/**)",
+      "Read(/C:\\Users\\Reinaldo\\AndroidStudioProjects\\printer-woosim\\app\\src\\main\\java\\net\\simplr\\woosimdp230l/**)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
