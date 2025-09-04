@@ -298,6 +298,7 @@ public class MainActivity extends AppCompatActivity implements MainPresenter.Vie
 //            presenter.printESCImage(this.getApplicationContext());
 //        });
         //ZPL Printing
+        //^MNT is for black gap
         String[] params = param.split(";");
         List<String> commands = new ArrayList<>();
         commands.add("CT~~CD,~CC^~CT~");
@@ -341,63 +342,12 @@ public class MainActivity extends AppCompatActivity implements MainPresenter.Vie
         commands.add("^FT25,775^A0N,28,31^FH\\^FD" + params[5] + "^FS");
         commands.add("^PQ1,0,0,N");
         commands.add("^XZ");
-//        commands.add("CT~CD,~CC^~CT");
-//        commands.add("^XA");
-//        commands.add("~TA000~JSN^LT0^MNT^MTT^PON^PMN^LH0,0^JMA^PR6,6~SD10^JUS^LRN^CI0^XZ");
-//        commands.add("^XA");
-//        commands.add("^MMT");
-//        commands.add("^PW609");
-//        commands.add("^LL0609");
-//        commands.add("^LS0");
-//        commands.add("eJzt0LEJACAMAMGAg+vggrY2AcFUcjfAFx8BAPCntg6jsJWqbGVmHu5P4ctDla2rQ48tAICIDcmI3qw=:A2BB");
-//        commands.add(");        eJxjYBgFo2AUjIJRMAqGHmD/jwEaiFNGFGhgqCdTJxXN+oHN45hmYVU2CgY3AACQ9d0j:F0AB");
-//        commands.add("eJxjYEACjAeGDmZ4MIQwbgAA/YFGDA==:B264");
-//        commands.add(");        eJxjYBgFo2AUjIKhBdj/g8AfsvXL/0cHpJlVj6GfJLOY8WqHgh+49fMTo/8Bbv32xOhvoHEgEDDrA0n6Mc06QLb+UTAK6AQA2w3bmg==:7990");
-//        commands.add("eJxjYBg0gH2Y0cwNo/RQoBkPDE+aKAAAj8kwMQ==:");
-//        commands.add("^FO8,220^GB593,0,3^FS");
-//        commands.add("^FO8,110^GB593,0,3^FS");
-//        commands.add("^FO6,7^GB595,595,2^FS");
-//        commands.add("^FO6,442^GB592,0,3^FS");
-//        commands.add("^FO170,515^GB0,87,3^FS");
-//        commands.add("^FO350,515^GB0,87,3^FS");
-//        commands.add("^FO8,512^GB593,0,3^FS");
-//        commands.add("^FO192,110^GB0,110,3^FS");
-//        commands.add("^FO431,110^GB0,110,3^FS");
-//        commands.add("^FO6,395^GB595,0,3^FS");
-//        commands.add("^FT592,80^A0I,34,33^FH\\^FDLot No^FS");
-//        commands.add("^FT372,181^A0I,25,24^FH\\^FDBIN No^FS");
-//        commands.add("^FT592,567^A0I,28,28^FH\\^FDReceived Date^FS");
-//        commands.add("^FT592,522^A0I,34,33^FH\\^FD" + params[2] + "^FS");
-//        commands.add("^FT592,19^A0I,54,57^FH\\^FD" + params[5] + "^FS");
-//        commands.add("^FT372,137^A0I,31,31^FH\\^FDRCW^FS");
-//        commands.add("^FT592,403^A0I,34,33^FB58,1,0,C^FH\\^FDSKU^FS");
-//        commands.add("^FT259,403^A0I,34,33^FB115,1,0,C^FH\\^FDLocation^FS");
-//        commands.add("^FT125,399^A0I,42,40^FH\\^FDMAIN^FS");
-//        commands.add("^FT519,403^A0I,34,33^FB149,1,0,C^FH\\^FD" + params[7] + "^FS");
-//        commands.add("^FT324,519^A0I,34,33^FH\\^FD" + params[4] + "^FS");
-//        commands.add("^FT324,564^A0I,31,31^FH\\^FDUOM^FS");
-//        commands.add("^FT353,455^A0I,39,38^FH\\^FD" + params[8] + "^FS");
-//        commands.add("^FT592,451^A0I,51,50^FH\\^FDPallet No:^FS");
-//        commands.add("^FT592,132^A0I,34,33^FH\\^FDSria B 30's^FS");
-//        commands.add("^FT592,181^A0I,28,28^FH\\^FDItem Name^FS");
-//        commands.add("^FT153,529^A0I,31,31^FH\\^FD05/07/2024^FS");
-//        commands.add("^FT153,570^A0I,25,24^FH\\^FDExpiry Date^FS");
-//        commands.add("^FT157,181^A0I,25,24^FH\\^FDQty^FS");
-//        commands.add("^FT159,133^A0I,37,43^FB63,1,0,C^FH\\^FD" + params[3] + "^FS");
-//        commands.add("^FT209,80^A0I,34,33^FH\\^FD^FS");
-//        commands.add("^FT212,19^A0I,56,55^FH\\^FD^FS");
-//        commands.add("^BY2,3,144^FT457,245^BCI,,Y,N");
-//        commands.add("^FD>:SAM3P0>5000301^FS");
-//        commands.add("^PQ1,0,0,N");
-//        commands.add("^XZ");
         PermissionX.init(this).permissions(Manifest.permission.BLUETOOTH_SCAN, Manifest.permission.BLUETOOTH_CONNECT, Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION).request((allGranted, grantedList, deniedList) -> {
             if (allGranted) {
                 try {
                     presenter.connectZebra();
-                    for (int x = 0; x < 3; x++) {
-                        for (int i = 0; i < commands.size(); i++) {
-                            presenter.sendZebraCommand(commands.get(i));
-                        }
+                    for (int i = 0; i < commands.size(); i++) {
+                        presenter.sendZebraCommand(commands.get(i));
                     }
                     presenter.closeZebraCommand();
                 } catch (ZebraPrinterLanguageUnknownException e) {
