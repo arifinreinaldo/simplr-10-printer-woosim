@@ -71,7 +71,13 @@ public class MainActivity extends AppCompatActivity implements MainPresenter.Vie
             arrArgs = new String[0];
         }
         if (arrArgs.length > 0) {
-            printZPL(arrArgs);
+            PermissionX.init(this).permissions(Manifest.permission.BLUETOOTH_SCAN, Manifest.permission.BLUETOOTH_CONNECT, Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION).request((allGranted, grantedList, deniedList) -> {
+                if (allGranted) {
+                    presenter.printZPL(arrArgs);
+                } else {
+                    Toast.makeText(this, String.join(",", deniedList), Toast.LENGTH_SHORT).show();
+                }
+            });
 
         } else {
             if (printer_code.equals("SUNMI_V2")) {
@@ -152,7 +158,7 @@ public class MainActivity extends AppCompatActivity implements MainPresenter.Vie
     @Override
     public void showLoading() {
         Log.d("Printer", "showLoading: ");
-//        binding.loading.setVisibility(View.VISIBLE);
+        binding.loading.setVisibility(View.VISIBLE);
     }
 
     @Override
@@ -177,7 +183,9 @@ public class MainActivity extends AppCompatActivity implements MainPresenter.Vie
 //        data.putExtra("isSuccess", bool);
 //        data.putExtra("message", message);
 //        setResult(RESULT_OK, data);
-        Toast.makeText(getApplicationContext(), message, Toast.LENGTH_SHORT).show();
+        if (!message.isEmpty()) {
+            Toast.makeText(getApplicationContext(), message, Toast.LENGTH_SHORT).show();
+        }
         this.finishAffinity();
 //        System.exit(0);
     }
@@ -242,7 +250,8 @@ public class MainActivity extends AppCompatActivity implements MainPresenter.Vie
 
     @Override
     public void showESCTesting() {
-//        binding.loading.setVisibility(View.GONE);
+        binding.loading.setVisibility(View.VISIBLE);
+        processData();
 //        binding.escpos.setVisibility(View.VISIBLE);
 //        //ESC Tester
 ////        binding.btn1.setOnClickListener(view -> {
@@ -285,90 +294,6 @@ public class MainActivity extends AppCompatActivity implements MainPresenter.Vie
 //        });
     }
 
-    @Override
-    public void printZPL(String[] paramList) {
-        binding.loading.setVisibility(View.GONE);
-        binding.escpos.setVisibility(View.VISIBLE);
-        //ESC Tester
-//        binding.btn1.setOnClickListener(view -> {
-//            presenter.printESCText();
-//        });
-//        binding.btn2.setOnClickListener(view -> {
-//            presenter.printESCImage(this.getApplicationContext());
-//        });
-        //ZPL Printing
-        //^MNT is for black gap
-        //POI to invert PON for normal label
-        List<String> commands = new ArrayList<>();
-        for (int i = 0; i < paramList.length; i++) {
-            String[] params = paramList[i].split(";");
-            commands.add("CT~~CD,~CC^~CT~");
-            commands.add("^XA~TA000~JSN^LT0^MNT^MTD^POI^PMN^LH0,0^JMA^PR5,5~SD15^JUS^LRN^CI0");
-            commands.add("^MMT");
-            commands.add("^PW609");
-            commands.add("^LL0812");
-            commands.add("^LS0");
-            commands.add("^FO10,10^GB590,790,2^FS");
-            commands.add("^FT20,45^A0N,25,24^FH\\^FDPO NO^FS");
-            commands.add("^FT20,89^A0N,31,31^FH\\^FD" + params[13] + "^FS");
-            commands.add("^FT315,45^A0N,25,24^FH\\^FDLocation Code^FS");
-            commands.add("^FT315,89^A0N,31,31^FH\\^FD" + params[11] + "^FS");
-            commands.add("^FO10,112^GB590,0,2^FS");
-            commands.add("^FO304,12^GB0,198,2^FS");
-            commands.add("^FO10,209^GB590,0,2^FS");
-            commands.add("^FT315,147^A0N,25,24^FH\\^FDSKU^FS");
-            commands.add("^FT315,194^A0N,31,31^FH\\^FD" + params[6] + "^FS");
-            commands.add("^BY2,3,79^FT20,201^BCN,,N,N");
-            commands.add("^FD>:" + params[6] + "^FS");
-            commands.add("^FO10,329^GB590,0,2^FS");
-            commands.add("^FT20,280^A0N,34,33^FH\\^FD" + params[7] + "^FS");
-            commands.add("^FO10,476^GB590,0,2^FS");
-            commands.add("^BY2,3,119^FT20,467^BCN,,N,N");
-            commands.add("^FD>:" + params[5] + "^FS");
-            commands.add("^FO10,579^GB590,0,2^FS");
-            commands.add("^FO303,476^GB0,102,2^FS");
-            commands.add("^FT20,510^A0N,25,24^FH\\^FDLOT NO^FS");
-            commands.add("^FT20,560^A0N,31,31^FH\\^FD" + params[5] + "^FS");
-            commands.add("^FT315,510^A0N,25,24^FH\\^FDEXPIRY DATE^FS");
-            commands.add("^FT315,560^A0N,31,31^FH\\^FD" + params[10] + "^FS");
-            commands.add("^FO10,680^GB590,0,2^FS");
-            commands.add("^FO474,579^GB0,102,2^FS");
-            commands.add("^FT510,614^A0N,25,24^FH\\^FDUOM^FS");
-            commands.add("^FO355,578^GB0,102,2^FS");
-            commands.add("^FT380,614^A0N,25,24^FH\\^FDQTY^FS");
-            commands.add("^FT370,656^A0N,25,24^FH\\^FD" + params[3] + "^FS");
-            commands.add("^FT489,656^A0N,25,24^FH\\^FD" + params[4] + "^FS");
-            commands.add("^FT20,614^A0N,25,24^FH\\^FDRECEIVED DATE^FS");
-            commands.add("^FT20,662^A0N,31,31^FH\\^FD" + params[2] + "^FS");
-            commands.add("^FT20,715^A0N,25,24^FH\\^FDPALLET ID^FS");
-            commands.add("^FT20,771^A0N,31,31^FH\\^FD" + params[9] + "^FS");
-            commands.add("^FO303,680^GB0,121,2^FS");
-            commands.add("^BY2,3,99^FT315,789^BCN,,N,N");
-            commands.add("^FD>:" + params[9] + "^FS");
-            commands.add("^PQ1,0,0,N");
-            commands.add("^XZ");
-        }
-        PermissionX.init(this).permissions(Manifest.permission.BLUETOOTH_SCAN, Manifest.permission.BLUETOOTH_CONNECT, Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION).request((allGranted, grantedList, deniedList) -> {
-            if (allGranted) {
-                try {
-                    presenter.connectZebra();
-                    for (int i = 0; i < commands.size(); i++) {
-                        presenter.sendZebraCommand(commands.get(i));
-                    }
-                    presenter.closeZebraCommand();
-                    Toast.makeText(getApplicationContext(), "Print Command Finished", Toast.LENGTH_SHORT).show();
-                } catch (ZebraPrinterLanguageUnknownException e) {
-                    throw new RuntimeException(e);
-                } catch (ConnectionException e) {
-                    Toast.makeText(getApplicationContext(), e.getMessage(), Toast.LENGTH_SHORT).show();
-                } finally {
-                    finishAffinity();
-                }
-            } else {
-                Toast.makeText(this, String.join(",", deniedList), Toast.LENGTH_SHORT).show();
-            }
-        });
-    }
 
     @Override
     public void registerBluetooth() {

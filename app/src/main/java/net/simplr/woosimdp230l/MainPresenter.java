@@ -8,6 +8,7 @@ import android.graphics.Bitmap;
 import android.os.Handler;
 import android.util.DisplayMetrics;
 import android.util.Log;
+import android.widget.Toast;
 
 import com.dantsu.escposprinter.EscPosPrinter;
 import com.dantsu.escposprinter.connection.bluetooth.BluetoothConnection;
@@ -332,7 +333,7 @@ public class MainPresenter {
     public void verifyESCPOS() {
         String savedMac = spData.getString(sp_mac, "");
         if (!savedMac.isEmpty()) {
-            view.registerBluetooth();
+            view.showESCTesting();
         } else {
             view.registerBluetooth();
         }
@@ -413,6 +414,162 @@ public class MainPresenter {
         }
     }
 
+    public String[] wrapText(String sentence, int maxLineLength) {
+        List<String> lines = new ArrayList<>();
+        StringBuilder currentLine = new StringBuilder();
+
+        for (String word : sentence.split(" ")) {
+            if (currentLine.length() + word.length() + (currentLine.length() == 0 ? 0 : 1) <= maxLineLength) {
+                if (currentLine.length() > 0) {
+                    currentLine.append(" ");
+                }
+                currentLine.append(word);
+            } else {
+                lines.add(currentLine.toString());
+                currentLine = new StringBuilder(word);
+            }
+        }
+
+        // Add the last line if there's anything left
+        if (currentLine.length() > 0) {
+            lines.add(currentLine.toString());
+        }
+
+        return lines.toArray(new String[0]);
+    }
+
+    public String center(String text, int width) {
+        if (text.length() >= width) {
+            return text; // or truncate if needed
+        }
+
+        int totalPadding = width - text.length();
+        int paddingStart = totalPadding / 2;
+        int paddingEnd = totalPadding - paddingStart;
+
+        return " ".repeat(paddingStart) + text + " ".repeat(paddingEnd);
+    }
+
+    public void printZPL(String[] paramList) {
+        view.showLoading();
+        List<String> commands = new ArrayList<>();
+        //MNT for black mark
+        //POI for inverse , PON for normal
+        for (int i = 0; i < paramList.length; i++) {
+            String[] params = paramList[i].split(";");
+            String[] wrap = wrapText(params[7], 30);
+            commands.add("CT~~CD,~CC^~CT~");
+            commands.add("^XA~TA000~JSN^LT0^MNT^MTD^POI^PMN^LH0,0^JMA^PR5,5~SD15^JUS^LRN^CI0");
+            commands.add("^MMT");
+            commands.add("^PW609");
+            commands.add("^LL0812");
+            commands.add("^LS0");
+            commands.add("^FO10,10^GB590,790,2^FS");
+            commands.add("^FT20,45^A0N,25,24^FH\\^FDPO NO^FS");
+            commands.add("^FT20,89^A0N,31,31^FH\\^FD" + params[13] + "^FS");
+            commands.add("^FT315,45^A0N,25,24^FH\\^FDLocation Code^FS");
+            commands.add("^FT315,89^A0N,31,31^FB300,1,0,C,0^FH\\^FD" + params[11] + "^FS");
+            commands.add("^FO10,112^GB590,0,2^FS");
+            commands.add("^FO304,12^GB0,198,2^FS");
+            commands.add("^FO10,209^GB590,0,2^FS");
+            commands.add("^FT315,147^A0N,25,24^FH\\^FDSKU^FS");
+            commands.add("^FT315,194^A0N,31,31^FB300,1,0,C,0^FH\\^FD" + params[6] + "^FS");
+            commands.add("^BY2,3,79^FT20,201^BCN,,N,N");
+            commands.add("^FD>:" + params[6] + "^FS");
+            commands.add("^FO10,354^GB590,0,2^FS");
+            if (wrap.length >= 1) {
+                commands.add("^FT20,264^A0N,28,28^FH\\^FD" + wrap[0] + "^FS");
+            }
+            commands.add("^FO10,462^GB590,0,2^FS");
+            commands.add("^BY2,3,79^FT20,448^BCN,,N,N");
+            commands.add("^FD>:" + params[5] + "^FS");
+            commands.add("^FO10,566^GB590,0,2^FS");
+            commands.add("^FO303,465^GB0,102,2^FS");
+            commands.add("^FT20,495^A0N,25,24^FH\\^FDLOT NO^FS");
+            commands.add("^FT20,547^A0N,31,31^FH\\^FD" + params[5] + "^FS");
+            commands.add("^FT315,495^A0N,25,24^FH\\^FDEXPIRY DATE^FS");
+            commands.add("^FT315,547^A0N,31,31^FB300,1,0,C,0^FH\\^FD" + params[10] + "^FS");
+            commands.add("^FO10,668^GB590,0,2^FS");
+            commands.add("^FO453,566^GB0,102,2^FS");
+            commands.add("^FT500,603^A0N,25,24^FH\\^FDUOM^FS");
+            commands.add("^FO303,566^GB0,102,2^FS");
+            commands.add("^FT356,603^A0N,25,24^FH\\^FDQTY^FS");
+            commands.add("^FT315,649^A0N,30,35^FB140,1,0,C,0^FH\\^FD" + params[3] + "^FS");
+            commands.add("^FT463,649^A0N,30,35^FB140,1,0,C,0^FH\\^FD" + params[4] + "^FS");
+            commands.add("^FT20,603^A0N,25,24^FH\\^FDRECEIVED DATE^FS");
+            commands.add("^FT20,645^A0N,31,31^FB300,1,0,C,0^FH\\^FD" + params[2] + "^FS");
+            commands.add("^FT20,711^A0N,25,24^FH\\^FDPALLET ID^FS");
+            commands.add("^FT20,764^A0N,31,31^FH\\^FD" + params[9] + "^FS");
+            commands.add("^FO278,668^GB0,128,2^FS");
+            commands.add("^BY2,3,99^FT292,785^BCN,,N,N");
+            commands.add("^FD>:" + params[9] + "^FS");
+            if (wrap.length >= 2) {
+                commands.add("^FT20,321^A0N,28,28^FH\\^FD" + wrap[1] + "^FS");
+            }
+            commands.add("^PQ1,0,0,N");
+            commands.add("^XZ");
+
+//            commands.add("CT~~CD,~CC^~CT~");
+//            commands.add("^XA~TA000~JSN^LT0^MNT^MTD^POI^PMN^LH0,0^JMA^PR5,5~SD15^JUS^LRN^CI0");
+//            commands.add("^MMT");
+//            commands.add("^PW609");
+//            commands.add("^LL0812");
+//            commands.add("^LS0");
+//            commands.add("^FO10,10^GB590,790,2^FS");
+//            commands.add("^FT20,45^A0N,25,24^FH\\^FDPO NO^FS");
+//            commands.add("^FT20,89^A0N,31,31^FH\\^FD" + params[13] + "^FS");
+//            commands.add("^FT315,45^A0N,25,24^FH\\^FDLocation Code^FS");
+//            commands.add("^FT315,89^A0N,31,31^FH\\^FD" + params[11] + "^FS");
+//            commands.add("^FO10,112^GB590,0,2^FS");
+//            commands.add("^FO304,12^GB0,198,2^FS");
+//            commands.add("^FO10,209^GB590,0,2^FS");
+//            commands.add("^FT315,147^A0N,25,24^FH\\^FDSKU^FS");
+//            commands.add("^FT315,194^A0N,31,31^FH\\^FD" + params[6] + "^FS");
+//            commands.add("^BY2,3,79^FT20,201^BCN,,N,N");
+//            commands.add("^FD>:" + params[6] + "^FS");
+//            commands.add("^FO10,329^GB590,0,2^FS");
+//            commands.add("^FT20,280^A0N,34,33^FH\\^FD" + params[7] + "^FS");
+//            commands.add("^FO10,476^GB590,0,2^FS");
+//            commands.add("^BY2,3,119^FT20,467^BCN,,N,N");
+//            commands.add("^FD>:" + params[5] + "^FS");
+//            commands.add("^FO10,579^GB590,0,2^FS");
+//            commands.add("^FO303,476^GB0,102,2^FS");
+//            commands.add("^FT20,510^A0N,25,24^FH\\^FDLOT NO^FS");
+//            commands.add("^FT20,560^A0N,31,31^FH\\^FD" + params[5] + "^FS");
+//            commands.add("^FT315,510^A0N,25,24^FH\\^FDEXPIRY DATE^FS");
+//            commands.add("^FT315,560^A0N,31,31^FH\\^FD" + params[10] + "^FS");
+//            commands.add("^FO10,680^GB590,0,2^FS");
+//            commands.add("^FO474,579^GB0,102,2^FS");
+//            commands.add("^FT510,614^A0N,25,24^FH\\^FDUOM^FS");
+//            commands.add("^FO355,578^GB0,102,2^FS");
+//            commands.add("^FT380,614^A0N,25,24^FH\\^FDQTY^FS");
+//            commands.add("^FT370,656^A0N,25,24^FH\\^FD" + params[3] + "^FS");
+//            commands.add("^FT489,656^A0N,25,24^FH\\^FD" + params[3] + "^FS");
+//            commands.add("^FT20,614^A0N,25,24^FH\\^FDRECEIVED DATE^FS");
+//            commands.add("^FT20,662^A0N,31,31^FH\\^FD" + params[2] + "^FS");
+//            commands.add("^FT20,715^A0N,25,24^FH\\^FDPALLET ID^FS");
+//            commands.add("^FT20,771^A0N,31,31^FH\\^FD" + params[9] + "^FS");
+//            commands.add("^FO303,680^GB0,121,2^FS");
+//            commands.add("^BY2,3,99^FT315,789^BCN,,N,N");
+//            commands.add("^FD>:" + params[9] + "^FS");
+//            commands.add("^PQ1,0,0,N");
+//            commands.add("^XZ");
+        }
+        try {
+            connectZebra();
+            for (int i = 0; i < commands.size(); i++) {
+                sendZebraCommand(commands.get(i));
+            }
+            closeZebraCommand();
+        } catch (ZebraPrinterLanguageUnknownException e) {
+            throw new RuntimeException(e);
+        } catch (ConnectionException e) {
+            view.showError(e.getMessage());
+        } finally {
+            view.closeActivity(true, "");
+        }
+    }
+
     interface View {
         void showLoading();
 
@@ -434,7 +591,6 @@ public class MainPresenter {
 
         void showESCTesting();
 
-        void printZPL(String[] param);
 
         void registerBluetooth();
     }
