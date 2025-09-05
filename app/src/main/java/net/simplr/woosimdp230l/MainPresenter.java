@@ -451,108 +451,163 @@ public class MainPresenter {
         return " ".repeat(paddingStart) + text + " ".repeat(paddingEnd);
     }
 
+    // ZPL Template Constants
+    private static final String ZPL_INIT = "CT~~CD,~CC^~CT~";
+    private static final String ZPL_START = "^XA~TA000~JSN^LT0^MNT^MTD^POI^PMN^LH0,0^JMA^PR5,5~SD15^JUS^LRN^CI0";
+    private static final String ZPL_END = "^XZ";
+
     public void printZPL(String[] paramList) {
+        if (paramList == null || paramList.length == 0) {
+            view.closeActivity(true, "No Data");
+            return;
+        }
+
         view.showPrinting();
         ExecutorService executor = Executors.newSingleThreadExecutor();
         Handler mainHandler = new Handler(Looper.getMainLooper());
 
-        executor.execute(new Runnable() {
-            @Override
-            public void run() {
-                List<String> commands = new ArrayList<>();
-                try {
-                    // Your existing command building logic here
-                    for (int i = 0; i < paramList.length; i++) {
-                        String[] params = paramList[i].split(";");
-                        String[] wrap = wrapText(params[7], 30);
-                        commands.add("CT~~CD,~CC^~CT~");
-                        commands.add("^XA~TA000~JSN^LT0^MNT^MTD^POI^PMN^LH0,0^JMA^PR5,5~SD15^JUS^LRN^CI0");
-                        commands.add("^MMT");
-                        commands.add("^PW609");
-                        commands.add("^LL0812");
-                        commands.add("^LS0");
-                        commands.add("^FO10,10^GB590,790,2^FS");
-                        commands.add("^FT20,45^A0N,25,24^FH\\^FDPO NO^FS");
-                        commands.add("^FT20,89^A0N,31,31^FH\\^FD" + params[13] + "^FS");
-                        commands.add("^FT315,45^A0N,25,24^FH\\^FDLocation Code^FS");
-                        commands.add("^FT315,89^A0N,31,31^FB300,1,0,C,0^FH\\^FD" + params[11] + "^FS");
-                        commands.add("^FO10,112^GB590,0,2^FS");
-                        commands.add("^FO304,12^GB0,198,2^FS");
-                        commands.add("^FO10,209^GB590,0,2^FS");
-                        commands.add("^FT315,147^A0N,25,24^FH\\^FDSKU^FS");
-                        commands.add("^FT315,194^A0N,31,31^FB300,1,0,C,0^FH\\^FD" + params[6] + "^FS");
-                        commands.add("^BY2,3,79^FT20,201^BCN,,N,N");
-                        commands.add("^FD>:" + params[6] + "^FS");
-                        commands.add("^FO10,354^GB590,0,2^FS");
-                        if (wrap.length >= 1) {
-                            commands.add("^FT20,264^A0N,28,28^FH\\^FD" + wrap[0] + "^FS");
-                        }
-                        commands.add("^FO10,462^GB590,0,2^FS");
-                        commands.add("^BY2,3,79^FT20,448^BCN,,N,N");
-                        commands.add("^FD>:" + params[5] + "^FS");
-                        commands.add("^FO10,566^GB590,0,2^FS");
-                        commands.add("^FO303,465^GB0,102,2^FS");
-                        commands.add("^FT20,495^A0N,25,24^FH\\^FDLOT NO^FS");
-                        commands.add("^FT20,547^A0N,31,31^FH\\^FD" + params[5] + "^FS");
-                        commands.add("^FT315,495^A0N,25,24^FH\\^FDEXPIRY DATE^FS");
-                        commands.add("^FT315,547^A0N,31,31^FB300,1,0,C,0^FH\\^FD" + params[10] + "^FS");
-                        commands.add("^FO10,668^GB590,0,2^FS");
-                        commands.add("^FO453,566^GB0,102,2^FS");
-                        commands.add("^FT500,603^A0N,25,24^FH\\^FDUOM^FS");
-                        commands.add("^FO303,566^GB0,102,2^FS");
-                        commands.add("^FT356,603^A0N,25,24^FH\\^FDQTY^FS");
-                        commands.add("^FT315,649^A0N,30,35^FB140,1,0,C,0^FH\\^FD" + params[3] + "^FS");
-                        commands.add("^FT463,649^A0N,30,35^FB140,1,0,C,0^FH\\^FD" + params[4] + "^FS");
-                        commands.add("^FT20,603^A0N,25,24^FH\\^FDRECEIVED DATE^FS");
-                        commands.add("^FT20,645^A0N,31,31^FB300,1,0,C,0^FH\\^FD" + params[2] + "^FS");
-                        commands.add("^FT20,711^A0N,25,24^FH\\^FDPALLET ID^FS");
-                        commands.add("^FT20,764^A0N,31,31^FH\\^FD" + params[9] + "^FS");
-                        commands.add("^FO278,668^GB0,128,2^FS");
-                        commands.add("^BY2,3,99^FT292,785^BCN,,N,N");
-                        commands.add("^FD>:" + params[9] + "^FS");
-                        if (wrap.length >= 2) {
-                            commands.add("^FT20,321^A0N,28,28^FH\\^FD" + wrap[1] + "^FS");
-                        }
-                        commands.add("^PQ1,0,0,N");
-                        commands.add("^XZ");
-                    }
+        executor.execute(() -> {
+            boolean connected = false;
+            try {
+                List<String> commands = buildZPLCommands(paramList);
 
-                    connectZebra();
-                    for (String command : commands) {
-                        sendZebraCommand(command);
-                    }
-                    closeZebraCommand();
+                connectZebra();
+                connected = true;
 
-                    // On success - update UI
-                    mainHandler.post(new Runnable() {
-                        @Override
-                        public void run() {
-                            view.closeActivity(true, "");
-                        }
-                    });
-
-                } catch (ZebraPrinterLanguageUnknownException e) {
-                    throw new RuntimeException(e);  // this is severe, handle accordingly if needed
-
-                } catch (ConnectionException e) {
-                    // Post error message to UI thread
-                    final String errorMsg = e.getMessage();
-                    mainHandler.post(new Runnable() {
-                        @Override
-                        public void run() {
-                            view.showError(errorMsg);
-                        }
-                    });
-
-                    // Optionally, close activity after error
-                    mainHandler.post(new Runnable() {
-                        @Override
-                        public void run() {
-                            view.closeActivity(false, errorMsg);
-                        }
-                    });
+                for (String command : commands) {
+                    sendZebraCommand(command);
                 }
+
+                mainHandler.post(() -> view.closeActivity(true, ""));
+
+            } catch (Exception e) {
+                handlePrintError(e, mainHandler);
+            } finally {
+                if (connected) {
+                    try {
+                        closeZebraCommand();
+                    } catch (Exception e) {
+                        Log.e(TAG, "Error closing Zebra connection", e);
+                    }
+                }
+                executor.shutdown();
             }
+        });
+    }
+
+    private List<String> buildZPLCommands(String[] paramList) {
+        List<String> commands = new ArrayList<>(paramList.length * 50); // Pre-size
+
+        for (String param : paramList) {
+            String[] params = param.split(";");
+            if (params.length < 14) {
+                Log.w(TAG, "Invalid parameter format, skipping: " + param);
+                continue;
+            }
+
+            String labelCommand = createZPLLabel(params);
+            commands.add(labelCommand);
+        }
+
+        return commands;
+    }
+
+    private String createZPLLabel(String[] params) {
+        StringBuilder zpl = new StringBuilder(2000);
+        String[] wrap = wrapText(params[7], 30);
+
+        zpl.append(ZPL_INIT).append("\n")
+                .append(ZPL_START).append("\n")
+                .append("^MMT\n")
+                .append("^PW609\n")
+                .append("^LL0812\n")
+                .append("^LS0\n")
+                .append("^FO10,10^GB590,790,2^FS\n")
+
+                // PO Number
+                .append("^FT20,45^A0N,25,24^FH\\^FDPO NO^FS\n")
+                .append("^FT20,89^A0N,31,31^FH\\^FD").append(params[13]).append("^FS\n")
+
+                // Location Code
+                .append("^FT315,45^A0N,25,24^FH\\^FDLocation Code^FS\n")
+                .append("^FT315,89^A0N,31,31^FB300,1,0,C,0^FH\\^FD").append(params[11]).append("^FS\n")
+
+                // Separators
+                .append("^FO10,112^GB590,0,2^FS\n")
+                .append("^FO304,12^GB0,198,2^FS\n")
+                .append("^FO10,209^GB590,0,2^FS\n")
+
+                // SKU
+                .append("^FT315,147^A0N,25,24^FH\\^FDSKU^FS\n")
+                .append("^FT315,194^A0N,31,31^FB300,1,0,C,0^FH\\^FD").append(params[6]).append("^FS\n")
+
+                // SKU Barcode
+                .append("^BY2,3,79^FT20,201^BCN,,N,N\n")
+                .append("^FD>:").append(params[6]).append("^FS\n")
+
+                .append("^FO10,354^GB590,0,2^FS\n");
+
+        // Item Description (wrapped text)
+        if (wrap.length >= 1) {
+            zpl.append("^FT20,264^A0N,28,28^FH\\^FD").append(wrap[0]).append("^FS\n");
+        }
+        if (wrap.length >= 2) {
+            zpl.append("^FT20,321^A0N,28,28^FH\\^FD").append(wrap[1]).append("^FS\n");
+        }
+
+        zpl.append("^FO10,462^GB590,0,2^FS\n")
+                // Lot Number Barcode
+                .append("^BY2,3,79^FT20,448^BCN,,N,N\n")
+                .append("^FD>:").append(params[5]).append("^FS\n")
+
+                .append("^FO10,566^GB590,0,2^FS\n")
+                .append("^FO303,465^GB0,102,2^FS\n")
+
+                // Lot Number
+                .append("^FT20,495^A0N,25,24^FH\\^FDLOT NO^FS\n")
+                .append("^FT20,547^A0N,31,31^FH\\^FD").append(params[5]).append("^FS\n")
+
+                // Expiry Date
+                .append("^FT315,495^A0N,25,24^FH\\^FDEXPIRY DATE^FS\n")
+                .append("^FT315,547^A0N,31,31^FB300,1,0,C,0^FH\\^FD").append(params[10]).append("^FS\n")
+
+                .append("^FO10,668^GB590,0,2^FS\n")
+                .append("^FO453,566^GB0,102,2^FS\n")
+                .append("^FT500,603^A0N,25,24^FH\\^FDUOM^FS\n")
+                .append("^FO303,566^GB0,102,2^FS\n")
+                .append("^FT356,603^A0N,25,24^FH\\^FDQTY^FS\n")
+
+                // Quantity and UOM
+                .append("^FT315,649^A0N,30,35^FB140,1,0,C,0^FH\\^FD").append(params[3]).append("^FS\n")
+                .append("^FT463,649^A0N,30,35^FB140,1,0,C,0^FH\\^FD").append(params[4]).append("^FS\n")
+
+                // Received Date
+                .append("^FT20,603^A0N,25,24^FH\\^FDRECEIVED DATE^FS\n")
+                .append("^FT20,645^A0N,31,31^FB300,1,0,C,0^FH\\^FD").append(params[2]).append("^FS\n")
+
+                // Pallet ID
+                .append("^FT20,711^A0N,25,24^FH\\^FDPALLET ID^FS\n")
+                .append("^FT20,764^A0N,31,31^FH\\^FD").append(params[9]).append("^FS\n")
+
+                .append("^FO278,668^GB0,128,2^FS\n")
+
+                // Pallet ID Barcode
+                .append("^BY2,3,99^FT292,785^BCN,,N,N\n")
+                .append("^FD>:").append(params[9]).append("^FS\n")
+
+                .append("^PQ1,0,0,N\n")
+                .append(ZPL_END);
+
+        return zpl.toString();
+    }
+
+    private void handlePrintError(Exception e, Handler mainHandler) {
+        String errorMsg = e.getMessage();
+        Log.e(TAG, "Print error: " + errorMsg, e);
+
+        mainHandler.post(() -> {
+            view.showError(errorMsg);
+            view.closeActivity(false, errorMsg);
         });
     }
 
