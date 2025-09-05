@@ -434,7 +434,7 @@ public class MainPresenter {
 
         void showESCTesting();
 
-        void printZPL(String param);
+        void printZPL(String[] param);
 
         void registerBluetooth();
     }
@@ -451,13 +451,9 @@ public class MainPresenter {
             }
         }
 
-        if (selectedDevice == null) {
-            view.showError("Bluetooth is not found");
-        } else {
-            zebraConn = new com.zebra.sdk.comm.BluetoothConnection(savedMac);
-            zebraConn.open();
-            instance = ZebraPrinterFactory.getInstance(zebraConn);
-        }
+        zebraConn = new com.zebra.sdk.comm.BluetoothConnection(savedMac);
+        zebraConn.open();
+        instance = ZebraPrinterFactory.getInstance(zebraConn);
     }
 
     public void sendZebraCommand(String command) throws ConnectionException {
