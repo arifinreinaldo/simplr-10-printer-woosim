@@ -1,6 +1,7 @@
 package net.simplr.woosimdp230l;
 
 import android.Manifest;
+import android.app.Activity;
 import android.bluetooth.BluetoothDevice;
 import android.content.Context;
 import android.content.Intent;
@@ -19,8 +20,6 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import com.dascom.print.connection.BluetoothConnection;
 import com.dascom.print.utils.BluetoothUtils;
 import com.permissionx.guolindev.PermissionX;
-import com.zebra.sdk.comm.ConnectionException;
-import com.zebra.sdk.printer.ZebraPrinterLanguageUnknownException;
 
 import net.simplr.woosimdp230l.databinding.ActivityMainBinding;
 import net.simplr.woosimdp230l.sunmi.BluetoothUtil;
@@ -162,6 +161,12 @@ public class MainActivity extends AppCompatActivity implements MainPresenter.Vie
     }
 
     @Override
+    public void showPrinting() {
+        Log.d("Printer", "showLoading: ");
+        binding.printing.setVisibility(View.VISIBLE);
+    }
+
+    @Override
     public void hideLoading() {
         binding.loading.setVisibility(View.GONE);
     }
@@ -186,7 +191,11 @@ public class MainActivity extends AppCompatActivity implements MainPresenter.Vie
         if (!message.isEmpty()) {
             Toast.makeText(getApplicationContext(), message, Toast.LENGTH_SHORT).show();
         }
-        this.finishAffinity();
+        Intent resultIntent = new Intent();
+        resultIntent.putExtra("selected_value", "sukses");
+
+        setResult(Activity.RESULT_OK, resultIntent);
+        finish();
 //        System.exit(0);
     }
 
