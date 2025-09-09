@@ -542,7 +542,7 @@ public class MainPresenter {
                 .append("^FT315,194^A0N,31,31^FB300,1,0,C,0^FH\\^FD").append(params[6]).append("^FS\n")
 
                 // SKU Barcode
-                .append("^BY2,3,79^FT20,201^BCN,,N,N\n")
+                .append("^BY1,2,79^FT20,201^BCN,,N,N\n")
                 .append("^FD>:").append(params[6]).append("^FS\n")
 
                 .append("^FO10,354^GB590,0,2^FS\n");
@@ -592,7 +592,7 @@ public class MainPresenter {
                 .append("^FO278,668^GB0,128,2^FS\n")
 
                 // Pallet ID Barcode
-                .append("^BY2,3,99^FT292,785^BCN,,N,N\n")
+                .append("^BY1,2,99^FT292,785^BCN,,N,N\n")
                 .append("^FD>:").append(params[9]).append("^FS\n")
 
                 .append("^PQ1,0,0,N\n")
