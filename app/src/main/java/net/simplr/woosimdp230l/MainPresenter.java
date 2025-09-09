@@ -557,7 +557,7 @@ public class MainPresenter {
 
         zpl.append("^FO10,462^GB590,0,2^FS\n")
                 // Lot Number Barcode
-                .append("^BY2,3,79^FT20,448^BCN,,N,N\n")
+                .append("^BY1,2,79^FT20,448^BCN,,N,N\n")
                 .append("^FD>:").append(params[5]).append("^FS\n")
 
                 .append("^FO10,566^GB590,0,2^FS\n")
