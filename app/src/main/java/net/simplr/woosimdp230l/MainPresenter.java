@@ -453,7 +453,7 @@ public class MainPresenter {
 
     // ZPL Template Constants
     private static final String ZPL_INIT = "CT~~CD,~CC^~CT~";
-    private static final String ZPL_START = "^XA~TA000~JSN^LT0^MNT^MTD^POI^PMN^LH0,0^JMA^PR5,5~SD15^JUS^LRN^CI0";
+    private static final String ZPL_START = "^XA~TA000~JSN^LT0^MNT^MTD^POI^PMN^LH0,0^JMA^PR5,5~SD20^JUS^LRN^CI0";
     private static final String ZPL_END = "^XZ";
 
     public void printZPL(String[] paramList) {
@@ -592,7 +592,7 @@ public class MainPresenter {
                 .append("^FO278,668^GB0,128,2^FS\n")
 
                 // Pallet ID Barcode
-                .append("^BY1,2,99^FT292,785^BCN,,N,N\n")
+                .append("^BY1,2,99^FT330,785^BCN,,N,N\n")
                 .append("^FD>:").append(params[9]).append("^FS\n")
 
                 .append("^PQ1,0,0,N\n")
