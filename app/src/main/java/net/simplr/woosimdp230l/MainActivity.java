@@ -70,7 +70,7 @@ public class MainActivity extends AppCompatActivity implements MainPresenter.Vie
             arrArgs = new String[0];
         }
         if (arrArgs.length > 0) {
-            PermissionX.init(this).permissions(Manifest.permission.BLUETOOTH_SCAN, Manifest.permission.BLUETOOTH_CONNECT, Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION).request((allGranted, grantedList, deniedList) -> {
+            PermissionX.init(this).permissions(getBluetoothPermission()).request((allGranted, grantedList, deniedList) -> {
                 if (allGranted) {
                     presenter.printZPL(arrArgs);
                 } else {
@@ -101,7 +101,7 @@ public class MainActivity extends AppCompatActivity implements MainPresenter.Vie
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
         sp = getSharedPreferences(sp_file, Context.MODE_PRIVATE);
-        PermissionX.init(this).permissions(Manifest.permission.BLUETOOTH_SCAN, Manifest.permission.BLUETOOTH_CONNECT, Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION).request((allGranted, grantedList, deniedList) -> {
+        PermissionX.init(this).permissions(getBluetoothPermission()).request((allGranted, grantedList, deniedList) -> {
             if (allGranted) {
                 presenter = new MainPresenter(this, sp);
                 adapter = new AdapterDevice(this, listDevice);
@@ -115,6 +115,22 @@ public class MainActivity extends AppCompatActivity implements MainPresenter.Vie
                 Toast.makeText(this, "These permissions are denied", Toast.LENGTH_LONG).show();
             }
         });
+    }
+
+    private List<String> getBluetoothPermission() {
+        List<String> permissions = new ArrayList<>();
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+            // Android 12+ (API 31+)
+            permissions.add(Manifest.permission.BLUETOOTH_SCAN);
+            permissions.add(Manifest.permission.BLUETOOTH_CONNECT);
+        } else {
+            // Android 11 and below (API 30 and below)
+            permissions.add(Manifest.permission.BLUETOOTH);
+            permissions.add(Manifest.permission.BLUETOOTH_ADMIN);
+            permissions.add(Manifest.permission.ACCESS_COARSE_LOCATION);
+            permissions.add(Manifest.permission.ACCESS_FINE_LOCATION);
+        }
+        return permissions;
     }
 
     private void registerAddress() {
