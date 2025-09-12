@@ -83,13 +83,9 @@ public class MainActivity extends AppCompatActivity implements MainPresenter.Vie
                 arrArgs = intent.getStringArrayExtra("ARR_TO_PRINT");
                 presenter.processSunmiData(arrArgs);
             } else {
-                try {
-                    Toast.makeText(getApplicationContext(), "Need to call from external application", Toast.LENGTH_SHORT).show();
-                    Thread.sleep(500);
-                    finishAffinity();
-                } catch (Exception e) {
-
-                }
+                String[] jojo = new String[1];
+                jojo[0] = "Goro";
+                presenter.printZPL(jojo);
             }
         }
     }

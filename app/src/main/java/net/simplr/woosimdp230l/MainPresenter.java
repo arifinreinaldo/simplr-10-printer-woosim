@@ -499,13 +499,30 @@ public class MainPresenter {
         List<String> commands = new ArrayList<>(paramList.length * 50); // Pre-size
 
         for (String param : paramList) {
-            String[] params = param.split(";");
-            if (params.length < 14) {
-                Log.w(TAG, "Invalid parameter format, skipping: " + param);
-                continue;
-            }
+            String labelCommand = "CT~~CD,~CC^~CT~";
+            labelCommand += "^XA^LL203^XZ";
+            labelCommand += "^XA~TA000~JSN^LT0^MNN^MTD^PON^PMN^LH0,0^JMA^PR5,5~SD10^JUS^LRN^CI0";
+            labelCommand += "^MMT";
+            labelCommand += "^PW575";
+            labelCommand += "^LL0203";
+            labelCommand += "^LS0";
+            labelCommand += "^BY2,3,106^FT537,61^BCI,,Y,N";
+            labelCommand += "^FD>:P23DEC10-PL-010-004^FS";
+            labelCommand += "^PQ1,0,1,Y^XZ";
 
-            String labelCommand = createZPLLabel(params);
+//            String labelCommand = "CT~~CD,~CC^~CT~";
+//            labelCommand+="^XA^LL244^XZ";
+//            labelCommand+="^XA~TA000~JSN^LT0^MNN^MTD^PON^PMN^LH0,0^JMA^PR5,5~SD10^JUS^LRN^CI0";
+//            labelCommand+="^MMT";
+//            labelCommand+="^PW575";
+//            labelCommand+="^LL0244";
+//            labelCommand+="^LS0";
+//            labelCommand+="^FT33,240^BQN,2,9";
+//            labelCommand+="^FH\\^FDLA,123456789012^FS";
+//            labelCommand+="^FT552,185^A0I,28,28^FH\\^FDItem Name^FS";
+//            labelCommand+="^FT552,111^A0I,28,28^FH\\^FD12-09-2025^FS";
+//            labelCommand+="^FT552,30^A0I,28,28^FH\\^FDQty : 10^FS";
+//            labelCommand+="^PQ1,0,1,Y^XZ";
             commands.add(labelCommand);
         }
 
