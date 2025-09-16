@@ -515,7 +515,7 @@ public class MainPresenter {
     private String createZPLLabel(String[] params) {
         StringBuilder zpl = new StringBuilder(2000);
         String[] wrap = wrapText(params[7], 30);
-
+        String[] wrapSKU = wrapText(params[6], 11);
         zpl.append(ZPL_INIT).append("\n")
                 .append(ZPL_START).append("\n")
                 .append("^MMT\n")
@@ -530,29 +530,33 @@ public class MainPresenter {
 
                 // Location Code
                 .append("^FT315,45^A0N,25,24^FH\\^FDLocation Code^FS\n")
-                .append("^FT315,89^A0N,31,31^FB300,1,0,C,0^FH\\^FD").append(params[11]).append("^FS\n")
+                .append("^FT315,89^A0N,31,31^FB285,1,0,C,0^FH\\^FD").append(params[11]).append("^FS\n")
 
                 // Separators
                 .append("^FO10,112^GB590,0,2^FS\n")
-                .append("^FO304,12^GB0,198,2^FS\n")
-                .append("^FO10,209^GB590,0,2^FS\n")
+                .append("^FO304,12^GB0,234,2^FS\n")
+                .append("^FO10,245^GB590,0,2^FS\n")
 
                 // SKU
-                .append("^FT315,147^A0N,25,24^FH\\^FDSKU^FS\n")
-                .append("^FT315,194^A0N,31,31^FB300,1,0,C,0^FH\\^FD").append(params[6]).append("^FS\n")
-
-                // SKU Barcode
-                .append("^BY1,2,79^FT20,201^BCN,,N,N\n")
+                .append("^FT315,147^A0N,25,24^FH\\^FDSKU^FS\n");
+        if (wrapSKU.length >= 1) {
+            zpl.append("^FT315,185^A0N,31,31^FB285,1,0,L,0^FH\\^FD").append(wrapSKU[0]).append("^FS");
+        }
+        if (wrapSKU.length >= 2) {
+            zpl.append("^FT315,216^A0N,31,31^FB285,1,0,L,0^FH\\^FD").append(wrapSKU[0]).append("^FS");
+        }
+        // SKU Barcode
+        zpl.append("^BY1,2,79^FT20,201^BCN,,N,N\n")
                 .append("^FD>:").append(params[6]).append("^FS\n")
 
                 .append("^FO10,354^GB590,0,2^FS\n");
 
         // Item Description (wrapped text)
         if (wrap.length >= 1) {
-            zpl.append("^FT20,264^A0N,28,28^FH\\^FD").append(wrap[0]).append("^FS\n");
+            zpl.append("^FT20,277^A0N,28,28^FH\\^FD").append(wrap[0]).append("^FS\n");
         }
         if (wrap.length >= 2) {
-            zpl.append("^FT20,321^A0N,28,28^FH\\^FD").append(wrap[1]).append("^FS\n");
+            zpl.append("^FT20,335^A0N,28,28^FH\\^FD").append(wrap[1]).append("^FS\n");
         }
 
         zpl.append("^FO10,462^GB590,0,2^FS\n")
@@ -569,7 +573,7 @@ public class MainPresenter {
 
                 // Expiry Date
                 .append("^FT315,495^A0N,25,24^FH\\^FDEXPIRY DATE^FS\n")
-                .append("^FT315,547^A0N,31,31^FB300,1,0,C,0^FH\\^FD").append(params[10]).append("^FS\n")
+                .append("^FT315,547^A0N,31,31^FB285,1,0,C,0^FH\\^FD").append(params[10]).append("^FS\n")
 
                 .append("^FO10,668^GB590,0,2^FS\n")
                 .append("^FO453,566^GB0,102,2^FS\n")
@@ -583,7 +587,7 @@ public class MainPresenter {
 
                 // Received Date
                 .append("^FT20,603^A0N,25,24^FH\\^FDRECEIVED DATE^FS\n")
-                .append("^FT20,645^A0N,31,31^FB300,1,0,C,0^FH\\^FD").append(params[2]).append("^FS\n")
+                .append("^FT20,645^A0N,31,31^FB285,1,0,C,0^FH\\^FD").append(params[2]).append("^FS\n")
 
                 // Pallet ID
                 .append("^FT20,711^A0N,25,24^FH\\^FDPALLET ID^FS\n")
