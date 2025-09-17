@@ -512,7 +512,7 @@ public class MainPresenter {
         return commands;
     }
 
-    private String createZPLLabel(String[] params) {
+    public String createZPLLabel(String[] params) {
         StringBuilder zpl = new StringBuilder(2000);
         String[] wrap = wrapText(params[7], 30);
         String[] wrapSKU = wrapText(params[6], 11);
@@ -573,7 +573,7 @@ public class MainPresenter {
 
                 // Expiry Date
                 .append("^FT315,495^A0N,25,24^FH\\^FDEXPIRY DATE^FS\n")
-                .append("^FT315,547^A0N,31,31^FB285,1,0,C,0^FH\\^FD").append(params[10]).append("^FS\n")
+                .append("^FT315,547^A0N,35,35^FB285,1,0,C,0^FH\\^FD").append(params[10]).append("^FS\n")
 
                 .append("^FO10,668^GB590,0,2^FS\n")
                 .append("^FO453,566^GB0,102,2^FS\n")
@@ -587,7 +587,7 @@ public class MainPresenter {
 
                 // Received Date
                 .append("^FT20,603^A0N,25,24^FH\\^FDRECEIVED DATE^FS\n")
-                .append("^FT20,645^A0N,31,31^FB285,1,0,C,0^FH\\^FD").append(params[2]).append("^FS\n")
+                .append("^FT20,645^A0N,35,35^FB285,1,0,C,0^FH\\^FD").append(params[2]).append("^FS\n")
 
                 // Pallet ID
                 .append("^FT20,711^A0N,25,24^FH\\^FDPALLET ID^FS\n")
