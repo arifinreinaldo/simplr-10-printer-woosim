@@ -512,7 +512,75 @@ public class MainPresenter {
         return commands;
     }
 
-    public String createZPLLabel(String[] params) {
+    public void createZPLTest() {
+        String[] test = new String[14];
+        test[0] = "0";
+        test[1] = "1";
+        test[2] = "2";
+        test[3] = "3";
+        test[4] = "4";
+        test[5] = "5";
+        test[6] = "6";
+        test[7] = "7";
+        test[8] = "8";
+        test[9] = "9";
+        test[10] = "10";
+        test[11] = "11";
+        test[12] = "12";
+        test[13] = "13";
+        String zplValue = createZPLLabel(test);
+        Log.d(TAG, "createZPLTest: " + zplValue);
+    }
+
+    /*
+    CT~~CD,~CC^~CT~
+            ^XA~TA000~JSN^LT0^MNT^MTD^POI^PMN^LH0,0^JMA^PR5,5~SD20^JUS^LRN^CI0
+^MMT
+^PW609
+^LL0812
+^LS0
+^FO10,10^GB590,790,2^FS
+^FT20,45^A0N,25,24^FH\^FDPO NO^FS
+^FT20,89^A0N,31,31^FH\^FD13^FS
+^FT315,45^A0N,25,24^FH\^FDLOCATION CODE^FS
+^FT315,89^A0N,31,31^FB285,1,0,C,0^FH\^FD11^FS
+^FO10,100^GB590,0,2^FS
+^FO304,12^GB0,90,2^FS
+^FO10,225^GB590,0,2^FS
+^FT20,130^A0N,25,24^FH\^FDSKU^FS
+^FT20,195^A0N,31,31^FB380,2,0,L,0^FH\^FDKappa Mozart Alpha Manurung Siagian^FS
+^FO405,100^GB0,125,2^FS
+^FT415,130^A0N,25,24^FH\^FDPLT SEQ^FS
+^FO10,354^GB590,0,2^FS
+^FT20,255^A0N,25,24^FH\^FDSKU BARCODE^FS
+^BY2,3,79^FT20,345^BCN,,N,N
+^FD>:5^FS
+^FO10,462^GB590,0,2^FS
+^FT20,385^A0N,25,24^FH\^FDDESCRIPTION^FS
+^FT20,450^A0N,28,28^FB550,2,0,L,0^^FH\^FDChicken MC Donal storage super long frrozen again no more choice^FS
+^FO10,566^GB590,0,2^FS
+^FO303,465^GB0,102,2^FS
+^FT20,495^A0N,25,24^FH\^FDLOT NO^FS
+^FT20,547^A0N,31,31^FH\^FD5^FS
+^FT315,495^A0N,25,24^FH\^FDEXPIRY DATE^FS
+^FT315,547^A0N,35,35^FB285,1,0,C,0^FH\^FD10^FS
+^FO10,668^GB590,0,2^FS
+^FO453,566^GB0,102,2^FS
+^FT500,603^A0N,25,24^FH\^FDUOM^FS
+^FO303,566^GB0,102,2^FS
+^FT356,603^A0N,25,24^FH\^FDQTY^FS
+^FT315,649^A0N,30,35^FB140,1,0,C,0^FH\^FD3^FS
+^FT463,649^A0N,30,35^FB140,1,0,C,0^FH\^FD4^FS
+^FT20,603^A0N,25,24^FH\^FDRECEIVED DATE^FS
+^FT20,645^A0N,35,35^FB285,1,0,C,0^FH\^FD2^FS
+^FT20,711^A0N,25,24^FH\^FDPALLET ID^FS
+^FT20,764^A0N,31,31^FH\^FDSEJ-000-000^FS
+^BY2,3,99^FT250,785^BCN,,N,N
+^FD>:9^FS
+^PQ1,0,0,N
+^XZ
+     */
+    private String createZPLLabel(String[] params) {
         StringBuilder zpl = new StringBuilder(2000);
         String[] wrap = wrapText(params[7], 30);
         String[] wrapSKU = wrapText(params[6], 11);
