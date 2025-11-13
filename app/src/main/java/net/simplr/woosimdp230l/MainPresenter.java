@@ -594,9 +594,9 @@ public class MainPresenter {
                 .append("^FT20,195^A0N,31,31^FB380,2,0,L,0^FH\\^FD").append(params[6]).append("^FS\n")
                 .append("^FO405,100^GB0,125,2^FS\n")
                 // Pallet Sequence Section
-                .append("^FT415,130^A0N,25,24^FH\\^FDPLT SEQ^FS\n")
-                .append("^FT415,155^A0N,25,24^FH\\^FD").append(params[2]).append("^FS\n")
-                .append("^FT415,180^A0N,25,24^FH\\^FD").append(params[14]).append("^FS\n")
+                .append("^FT415,130^A0N,25,24^FH\\^FDREC. TIME^FS\n")
+//                .append("^FT415,155^A0N,25,24^FH\\^FD").append(params[2]).append("^FS\n")
+                .append("^FT415,160^A0N,25,24^FH\\^FD").append(params[14]).append("^FS\n")
                 .append("^FO10,354^GB590,0,2^FS\n")
                 // SKU Barcode
                 .append("^FT20,255^A0N,25,24^FH\\^FDSKU BARCODE^FS\n")
