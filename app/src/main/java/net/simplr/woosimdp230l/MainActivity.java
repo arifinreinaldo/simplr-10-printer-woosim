@@ -101,9 +101,11 @@ public class MainActivity extends AppCompatActivity implements MainPresenter.Vie
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
         sp = getSharedPreferences(sp_file, Context.MODE_PRIVATE);
+
+        presenter = new MainPresenter(this, sp);
+        presenter.createZPLTest();//for testing display zpl only
         PermissionX.init(this).permissions(getBluetoothPermission()).request((allGranted, grantedList, deniedList) -> {
             if (allGranted) {
-                presenter = new MainPresenter(this, sp);
                 adapter = new AdapterDevice(this, listDevice);
                 adapter.setClickListener((view, position) -> {
                     Toast.makeText(getBaseContext(), "Address selected", Toast.LENGTH_SHORT).show();
