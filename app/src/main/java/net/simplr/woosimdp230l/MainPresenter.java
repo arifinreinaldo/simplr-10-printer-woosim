@@ -680,10 +680,10 @@ public class MainPresenter {
                     // Quantity & UOM
                     .append("^FO415,566^GB0,102,2^FS\n")
                     .append("^FT420,603^A0N,31,31^FB190,1,0,C,0^FH\\^FDUOM^FS\n")
-                    .append("^FT420,649^A0N,30,35^FB190,1,0,C,0^FH\\^FD").append(params[4]).append("^FS\n")
+                    .append("^FT420,649^A0N,30,35^FB190,1,0,C,0^FH\\^FD").append(params[3]).append("^FS\n")
                     .append("^FO605,566^GB0,102,2^FS\n")
                     .append("^FT610,603^A0N,31,31^FB190,1,0,C,0^FH\\^FDUOM^FS\n")
-                    .append("^FT610,649^A0N,30,35^FB190,1,0,C,0^FH\\^FD").append(params[3]).append("^FS\n")
+                    .append("^FT610,649^A0N,30,35^FB190,1,0,C,0^FH\\^FD").append(params[4]).append("^FS\n")
                     // Received Date Section
                     .append("^FT20,603^A0N,25,24^FH\\^FDRECEIVED DATE^FS\n")
                     .append("^FT20,645^A0N,35,35^FB380,1,0,C,0^FH\\^FD").append(params[2]).append("^FS\n")
