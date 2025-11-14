@@ -596,7 +596,7 @@ public class MainPresenter {
                 // Pallet Sequence Section
                 .append("^FT415,130^A0N,25,24^FH\\^FDREC. TIME^FS\n")
 //                .append("^FT415,155^A0N,25,24^FH\\^FD").append(params[2]).append("^FS\n")
-                .append("^FT415,160^A0N,25,24^FH\\^FD").append(params[14]).append("^FS\n")
+                .append("^FT415,160^A0N,27,27^FH\\^FD").append(params[14]).append("^FS\n")
                 .append("^FO10,354^GB590,0,2^FS\n")
                 // SKU Barcode
                 .append("^FT20,255^A0N,25,24^FH\\^FDSKU BARCODE^FS\n")
