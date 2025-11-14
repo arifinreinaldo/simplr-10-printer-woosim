@@ -103,7 +103,7 @@ public class MainActivity extends AppCompatActivity implements MainPresenter.Vie
         sp = getSharedPreferences(sp_file, Context.MODE_PRIVATE);
 
         presenter = new MainPresenter(this, sp);
-        presenter.createZPLTest();//for testing display zpl only
+//        presenter.createZPLTest();//for testing display zpl only
         PermissionX.init(this).permissions(getBluetoothPermission()).request((allGranted, grantedList, deniedList) -> {
             if (allGranted) {
                 adapter = new AdapterDevice(this, listDevice);

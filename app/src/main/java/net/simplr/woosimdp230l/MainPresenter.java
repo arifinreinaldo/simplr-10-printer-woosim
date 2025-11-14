@@ -43,6 +43,7 @@ import honeywell.printer.DocumentEZ;
 import honeywell.printer.DocumentLP;
 
 public class MainPresenter {
+    boolean isThreeInch = true;
     String TAG = "Dascom";
     private BluetoothCustom mIConnection;
     private ZPL zpl;
@@ -572,68 +573,130 @@ public class MainPresenter {
      */
     private String createZPLLabel(String[] params) {
         StringBuilder zpl = new StringBuilder(2000);
-        zpl.append(ZPL_INIT).append("\n")
-                .append(ZPL_START).append("\n").append("^MMT\n")
-                .append("^PW609\n")
-                .append("^LL0812\n")
-                .append("^LS0\n")
-                // Outer Border
-                .append("^FO10,10^GB590,790,2^FS\n")
-                // PO Number Section
-                .append("^FT20,45^A0N,25,24^FH\\^FDPO NO^FS\n")
-                .append("^FT20,89^A0N,31,31^FH\\^FD").append(params[13]).append("^FS\n")
-                // Location Code Section
-                .append("^FT315,45^A0N,25,24^FH\\^FDLOCATION CODE^FS\n")
-                .append("^FT315,89^A0N,31,31^FB285,1,0,C,0^FH\\^FD").append(params[11]).append("^FS\n")
-                // Horizontal Lines
-                .append("^FO10,100^GB590,0,2^FS\n")
-                .append("^FO304,12^GB0,90,2^FS\n")
-                .append("^FO10,225^GB590,0,2^FS\n")
-                // SKU Section
-                .append("^FT20,130^A0N,25,24^FH\\^FDSKU^FS\n")
-                .append("^FT20,195^A0N,31,31^FB380,2,0,L,0^FH\\^FD").append(params[6]).append("^FS\n")
-                .append("^FO405,100^GB0,125,2^FS\n")
-                // Pallet Sequence Section
-                .append("^FT415,130^A0N,25,24^FH\\^FDREC. TIME^FS\n")
+        zpl.append(ZPL_INIT).append("\n").append(ZPL_START).append("\n");
+        if (isThreeInch) {
+            zpl.append("^MMT\n")
+                    .append("^PW609\n")
+                    .append("^LL0812\n")
+                    .append("^LS0\n")
+                    // Outer Border
+                    .append("^FO10,10^GB590,790,2^FS\n")
+                    // PO Number Section
+                    .append("^FT20,45^A0N,25,24^FH\\^FDPO NO^FS\n")
+                    .append("^FT20,89^A0N,31,31^FH\\^FD").append(params[13]).append("^FS\n")
+                    // Location Code Section
+                    .append("^FT315,45^A0N,25,24^FH\\^FDLOCATION CODE^FS\n")
+                    .append("^FT315,89^A0N,31,31^FB285,1,0,C,0^FH\\^FD").append(params[11]).append("^FS\n")
+                    // Horizontal Lines
+                    .append("^FO10,100^GB590,0,2^FS\n")
+                    .append("^FO304,12^GB0,90,2^FS\n")
+                    .append("^FO10,225^GB590,0,2^FS\n")
+                    // SKU Section
+                    .append("^FT20,130^A0N,25,24^FH\\^FDSKU^FS\n")
+                    .append("^FT20,195^A0N,31,31^FB380,2,0,L,0^FH\\^FD").append(params[6]).append("^FS\n")
+                    .append("^FO405,100^GB0,125,2^FS\n")
+                    // Pallet Sequence Section
+                    .append("^FT415,130^A0N,25,24^FH\\^FDREC. TIME^FS\n")
 //                .append("^FT415,155^A0N,25,24^FH\\^FD").append(params[2]).append("^FS\n")
-                .append("^FT415,160^A0N,31,30^FH\\^FD").append(params[14]).append("^FS\n")
-                .append("^FO10,354^GB590,0,2^FS\n")
-                // SKU Barcode
-                .append("^FT20,255^A0N,25,24^FH\\^FDSKU BARCODE^FS\n")
-                .append("^BY2,3,79\n")
-                .append("^FT20,345^BCN,,N,N\n")
-                .append("^FD>:").append(params[6]).append("^FS\n")
-                .append("^FO10,462^GB590,0,2^FS\n")
-                // Description Section
-                .append("^FT20,385^A0N,25,24^FH\\^FDDESCRIPTION^FS\n")
-                .append("^FT20,450^A0N,28,28^FB550,2,0,L,0^FH\\^FD").append(params[7]).append("^FS\n")
-                .append("^FO10,566^GB590,0,2^FS\n")
-                .append("^FO303,465^GB0,102,2^FS\n")
-                // Lot and Expiry Date
-                .append("^FT20,495^A0N,25,24^FH\\^FDLOT NO^FS\n")
-                .append("^FT20,547^A0N,31,31^FH\\^FD").append(params[5]).append("^FS\n")
-                .append("^FT315,495^A0N,25,24^FH\\^FDEXPIRY DATE^FS\n")
-                .append("^FT315,547^A0N,35,35^FB285,1,0,C,0^FH\\^FD").append(params[10]).append("^FS\n")
-                .append("^FO10,668^GB590,0,2^FS\n")
-                .append("^FO453,566^GB0,102,2^FS\n")
-                .append("^FO303,566^GB0,102,2^FS\n")
-                // Quantity & UOM
-                .append("^FT500,603^A0N,25,24^FH\\^FDUOM^FS\n")
-                .append("^FT356,603^A0N,25,24^FH\\^FDQTY^FS\n")
-                .append("^FT315,649^A0N,30,35^FB140,1,0,C,0^FH\\^FD").append(params[3]).append("^FS\n")
-                .append("^FT463,649^A0N,30,35^FB140,1,0,C,0^FH\\^FD").append(params[4]).append("^FS\n")
-                // Received Date Section
-                .append("^FT20,603^A0N,25,24^FH\\^FDRECEIVED DATE^FS\n")
-                .append("^FT20,645^A0N,35,35^FB285,1,0,C,0^FH\\^FD").append(params[2]).append("^FS\n")
-                // Pallet ID Section
-                .append("^FT20,711^A0N,25,24^FH\\^FDPALLET ID^FS\n")
-                .append("^FT20,764^A0N,31,31^FH\\^FD").append(params[9]).append("^FS\n")
-                // Pallet Barcode
-                .append("^BY2,3,99\n")
-                .append("^FT250,785^BCN,,N,N\n")
-                .append("^FD>:").append(params[9]).append("^FS\n")
-                .append("^PQ1,0,0,N\n")
-                .append(ZPL_END);
+                    .append("^FT415,160^A0N,31,30^FH\\^FD").append(params[14]).append("^FS\n")
+                    .append("^FO10,354^GB590,0,2^FS\n")
+                    // SKU Barcode
+                    .append("^FT20,255^A0N,25,24^FH\\^FDSKU BARCODE^FS\n")
+                    .append("^BY2,3,79\n")
+                    .append("^FT20,345^BCN,,N,N\n")
+                    .append("^FD>:").append(params[6]).append("^FS\n")
+                    .append("^FO10,462^GB590,0,2^FS\n")
+                    // Description Section
+                    .append("^FT20,385^A0N,25,24^FH\\^FDDESCRIPTION^FS\n")
+                    .append("^FT20,450^A0N,28,28^FB550,2,0,L,0^FH\\^FD").append(params[7]).append("^FS\n")
+                    .append("^FO10,566^GB590,0,2^FS\n")
+                    .append("^FO303,465^GB0,102,2^FS\n")
+                    // Lot and Expiry Date
+                    .append("^FT20,495^A0N,25,24^FH\\^FDLOT NO^FS\n")
+                    .append("^FT20,547^A0N,31,31^FH\\^FD").append(params[5]).append("^FS\n")
+                    .append("^FT315,495^A0N,25,24^FH\\^FDEXPIRY DATE^FS\n")
+                    .append("^FT315,547^A0N,35,35^FB285,1,0,C,0^FH\\^FD").append(params[10]).append("^FS\n")
+                    .append("^FO10,668^GB590,0,2^FS\n")
+                    .append("^FO453,566^GB0,102,2^FS\n")
+                    .append("^FO303,566^GB0,102,2^FS\n")
+                    // Quantity & UOM
+                    .append("^FT500,603^A0N,25,24^FH\\^FDUOM^FS\n")
+                    .append("^FT356,603^A0N,25,24^FH\\^FDQTY^FS\n")
+                    .append("^FT315,649^A0N,30,35^FB140,1,0,C,0^FH\\^FD").append(params[3]).append("^FS\n")
+                    .append("^FT463,649^A0N,30,35^FB140,1,0,C,0^FH\\^FD").append(params[4]).append("^FS\n")
+                    // Received Date Section
+                    .append("^FT20,603^A0N,25,24^FH\\^FDRECEIVED DATE^FS\n")
+                    .append("^FT20,645^A0N,35,35^FB285,1,0,C,0^FH\\^FD").append(params[2]).append("^FS\n")
+                    // Pallet ID Section
+                    .append("^FT20,711^A0N,25,24^FH\\^FDPALLET ID^FS\n")
+                    .append("^FT20,764^A0N,31,31^FH\\^FD").append(params[9]).append("^FS\n")
+                    // Pallet Barcode
+                    .append("^BY2,3,99\n")
+                    .append("^FT250,785^BCN,,N,N\n")
+                    .append("^FD>:").append(params[9]).append("^FS\n")
+                    .append("^PQ1,0,0,N\n");
+        } else {
+            zpl.append("^MMT\n")
+                    .append("^PW812\n")
+                    .append("^LL0812\n")
+                    .append("^LS0\n")
+                    // Outer Border
+                    .append("^FO10,10^GB790,790,2^FS\n")
+                    // PO Number Section
+                    .append("^FT20,45^A0N,25,24^FH\\^FDPO NO^FS\n")
+                    .append("^FT20,89^A0N,31,31^FH\\^FD").append(params[13]).append("^FS\n")
+                    // Location Code Section
+                    .append("^FT415,45^A0N,25,24^FH\\^FDLOCATION CODE^FS\n")
+                    .append("^FT415,89^A0N,31,31^FB380,1,0,C,0^FH\\^FD").append(params[11]).append("^FS\n")
+                    // Horizontal Lines
+                    .append("^FO10,100^GB790,0,2^FS\n")
+                    .append("^FO395,12^GB0,90,2^FS\n")
+                    .append("^FO10,225^GB790,0,2^FS\n")
+                    // SKU Section
+                    .append("^FT20,130^A0N,25,24^FH\\^FDSKU^FS\n")
+                    .append("^FT20,195^A0N,31,31^FB490,2,0,L,0^FH\\^FD").append(params[6]).append("^FS\n")
+                    .append("^FO500,100^GB0,125,2^FS\n")
+                    // Pallet Sequence / Received Time Section
+                    .append("^FT515,130^A0N,25,24^FH\\^FDREC. TIME^FS\n")
+                    .append("^FT515,160^A0N,31,30^FH\\^FD").append(params[14]).append("^FS\n")
+                    .append("^FO10,354^GB790,0,2^FS\n")
+                    // SKU Barcode
+                    .append("^FT20,255^A0N,25,24^FH\\^FDSKU BARCODE^FS\n")
+                    .append("^BY2,3,79\n")
+                    .append("^FT20,345^BCN,,N,N\n")
+                    .append("^FD>:").append(params[6]).append("^FS\n")
+                    .append("^FO10,462^GB790,0,2^FS\n")
+                    // Description Section
+                    .append("^FT20,385^A0N,25,24^FH\\^FDDESCRIPTION^FS\n")
+                    .append("^FT20,450^A0N,28,28^FB750,2,0,L,0^FH\\^FD").append(params[7]).append("^FS\n")
+                    .append("^FO10,566^GB790,0,2^FS\n")
+                    // Lot and Expiry Date
+                    .append("^FT20,495^A0N,25,24^FH\\^FDLOT NO^FS\n")
+                    .append("^FT20,547^A0N,31,31^FH\\^FD").append(params[5]).append("^FS\n")
+                    .append("^FO415,465^GB0,102,2^FS\n")
+                    .append("^FT425,495^A0N,25,24^FH\\^FDEXPIRY DATE^FS\n")
+                    .append("^FT425,547^A0N,35,35^FB380,1,0,C,0^FH\\^FD").append(params[10]).append("^FS\n")
+                    .append("^FO10,668^GB790,0,2^FS\n")
+                    // Quantity & UOM
+                    .append("^FO415,566^GB0,102,2^FS\n")
+                    .append("^FT420,603^A0N,31,31^FB190,1,0,C,0^FH\\^FDUOM^FS\n")
+                    .append("^FT420,649^A0N,30,35^FB190,1,0,C,0^FH\\^FD").append(params[4]).append("^FS\n")
+                    .append("^FO605,566^GB0,102,2^FS\n")
+                    .append("^FT610,603^A0N,31,31^FB190,1,0,C,0^FH\\^FDUOM^FS\n")
+                    .append("^FT610,649^A0N,30,35^FB190,1,0,C,0^FH\\^FD").append(params[3]).append("^FS\n")
+                    // Received Date Section
+                    .append("^FT20,603^A0N,25,24^FH\\^FDRECEIVED DATE^FS\n")
+                    .append("^FT20,645^A0N,35,35^FB380,1,0,C,0^FH\\^FD").append(params[2]).append("^FS\n")
+                    // Pallet ID Section
+                    .append("^FT20,711^A0N,25,24^FH\\^FDPALLET ID^FS\n")
+                    .append("^FT20,764^A0N,31,31^FH\\^FD").append(params[9]).append("^FS\n")
+                    // Pallet Barcode
+                    .append("^BY2,3,99\n")
+                    .append("^FT350,785^BCN,,N,N\n")
+                    .append("^FD>:").append(params[9]).append("^FS\n")
+                    .append("^PQ1,0,0,N\n");
+        }
+        zpl.append(ZPL_END);
 
         return zpl.toString();
     }
