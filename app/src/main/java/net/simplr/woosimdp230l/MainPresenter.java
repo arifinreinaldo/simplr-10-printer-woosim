@@ -43,7 +43,7 @@ import honeywell.printer.DocumentEZ;
 import honeywell.printer.DocumentLP;
 
 public class MainPresenter {
-    boolean isThreeInch = true;
+    boolean isThreeInch = false;
     String TAG = "Dascom";
     private BluetoothCustom mIConnection;
     private ZPL zpl;
@@ -513,7 +513,7 @@ public class MainPresenter {
         return commands;
     }
 
-    public void createZPLTest() {
+    public void createZPLTest(boolean isPrinting) {
         String param = ";S01R010046;13/11/2025;231;PKT;KFC-2511-32018;KDFF439;RANDOM CUT LETTUCE ;KDFF439;SEJ301084;18/11/2025;CHILLED;CRECEIVING;PO2511-S00136;07:46:52 AM";
         String[] params = param.split(";");
         if (params.length < 14) {
@@ -521,6 +521,35 @@ public class MainPresenter {
         }
         String labelCommand = createZPLLabel(params);
         Log.d(TAG, "createZPLTest: " + labelCommand);
+        if (!isPrinting) return;
+        view.showPrinting();
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        Handler mainHandler = new Handler(Looper.getMainLooper());
+
+        executor.execute(() -> {
+            boolean connected = false;
+            try {
+
+                connectZebra();
+                connected = true;
+                sendZebraCommand(labelCommand);
+
+
+                mainHandler.post(() -> view.closeActivity(true, ""));
+
+            } catch (Exception e) {
+                handlePrintError(e, mainHandler);
+            } finally {
+                if (connected) {
+                    try {
+                        closeZebraCommand();
+                    } catch (Exception e) {
+                        Log.e(TAG, "Error closing Zebra connection", e);
+                    }
+                }
+                executor.shutdown();
+            }
+        });
     }
 
     /*
