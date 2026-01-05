@@ -603,6 +603,10 @@ public class MainPresenter {
     private String createZPLLabel(String[] params) {
         StringBuilder zpl = new StringBuilder(2000);
         zpl.append(ZPL_INIT).append("\n").append(ZPL_START).append("\n");
+        String time = "";
+        if (params.length == 15) {
+            time = params[14];
+        }
         if (isThreeInch) {
             zpl.append("^MMT\n")
                     .append("^PW609\n")
@@ -627,7 +631,7 @@ public class MainPresenter {
                     // Pallet Sequence Section
                     .append("^FT415,130^A0N,25,24^FH\\^FDREC. TIME^FS\n")
 //                .append("^FT415,155^A0N,25,24^FH\\^FD").append(params[2]).append("^FS\n")
-                    .append("^FT415,160^A0N,31,30^FH\\^FD").append(params[14]).append("^FS\n")
+                    .append("^FT415,160^A0N,31,30^FH\\^FD").append(time).append("^FS\n")
                     .append("^FO10,354^GB590,0,2^FS\n")
                     // SKU Barcode
                     .append("^FT20,255^A0N,25,24^FH\\^FDSKU BARCODE^FS\n")
@@ -687,7 +691,7 @@ public class MainPresenter {
                     .append("^FO500,100^GB0,125,2^FS\n")
                     // Pallet Sequence / Received Time Section
                     .append("^FT515,130^A0N,25,24^FH\\^FDREC. TIME^FS\n")
-                    .append("^FT515,160^A0N,31,30^FH\\^FD").append(params[14]).append("^FS\n")
+                    .append("^FT515,160^A0N,31,30^FH\\^FD").append(time).append("^FS\n")
                     .append("^FO10,354^GB790,0,2^FS\n")
                     // SKU Barcode
                     .append("^FT20,255^A0N,25,24^FH\\^FDSKU BARCODE^FS\n")
