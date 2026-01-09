@@ -514,7 +514,7 @@ public class MainPresenter {
     }
 
     public void createZPLTest(boolean isPrinting) {
-        String param = ";S01R010046;13/11/2025;231;PKT;KFC-2511-32018;KDFF439;RANDOM CUT LETTUCE ;KDFF439;SEJ301084;18/11/2025;CHILLED;CRECEIVING;PO2511-S00136;07:46:52 AM";
+        String param = ";S01R010046;13/11/2025;231;PKT;KFC-2511-32018;HOME KITCHEN MUG CERAMIC COFFEE 12OZ;RANDOM CUT LETTUCE ;KDFF439;SEJ301084;18/11/2025;CHILLED;CRECEIVING;PO2511-S00136;07:46:52 AM";
         String[] params = param.split(";");
         if (params.length < 14) {
             Log.w(TAG, "Invalid parameter format, skipping: " + param);
@@ -687,11 +687,11 @@ public class MainPresenter {
                     .append("^FO10,225^GB790,0,2^FS\n")
                     // SKU Section
                     .append("^FT20,130^A0N,25,24^FH\\^FDSKU^FS\n")
-                    .append("^FT20,195^A0N,35,35^FB490,2,0,L,0^FH\\^FD").append(params[6]).append("^FS\n")
+                    .append("^FT20,210^A0N,35,35^FB490,2,0,L,0^FH\\^FD").append(params[6]).append("^FS\n")
                     .append("^FO500,100^GB0,125,2^FS\n")
                     // Pallet Sequence / Received Time Section
                     .append("^FT515,130^A0N,25,24^FH\\^FDREC. TIME^FS\n")
-                    .append("^FT515,160^A0N,35,35^FH\\^FD").append(time).append("^FS\n")
+                    .append("^FT515,175^A0N,35,35^FH\\^FD").append(time).append("^FS\n")
                     .append("^FO10,354^GB790,0,2^FS\n")
                     // SKU Barcode
                     .append("^FT20,255^A0N,25,24^FH\\^FDSKU BARCODE^FS\n")
@@ -705,21 +705,21 @@ public class MainPresenter {
                     .append("^FO10,566^GB790,0,2^FS\n")
                     // Lot and Expiry Date
                     .append("^FT20,495^A0N,25,24^FH\\^FDLOT NO^FS\n")
-                    .append("^FT20,547^A0N,35,35^FH\\^FD").append(params[5]).append("^FS\n")
+                    .append("^FT20,547^A0N,38,38^FH\\^FD").append(params[5]).append("^FS\n")
                     .append("^FO415,465^GB0,102,2^FS\n")
                     .append("^FT425,495^A0N,25,24^FH\\^FDEXPIRY DATE^FS\n")
-                    .append("^FT425,547^A0N,35,35^FB380,1,0,C,0^FH\\^FD").append(params[10]).append("^FS\n")
+                    .append("^FT425,547^A0N,38,38^FB380,1,0,C,0^FH\\^FD").append(params[10]).append("^FS\n")
                     .append("^FO10,668^GB790,0,2^FS\n")
                     // Quantity & UOM
                     .append("^FO415,566^GB0,102,2^FS\n")
                     .append("^FT420,603^A0N,25,24^FB190,1,0,C,0^FH\\^FDQTY^FS\n")
-                    .append("^FT420,649^A0N,35,35^FB190,1,0,C,0^FH\\^FD").append(params[3]).append("^FS\n")
+                    .append("^FT420,649^A0N,38,38^FB190,1,0,C,0^FH\\^FD").append(params[3]).append("^FS\n")
                     .append("^FO605,566^GB0,102,2^FS\n")
                     .append("^FT610,603^A0N,25,24^FB190,1,0,C,0^FH\\^FDUOM^FS\n")
                     .append("^FT610,649^A0N,35,35^FB190,1,0,C,0^FH\\^FD").append(params[4]).append("^FS\n")
                     // Received Date Section
                     .append("^FT20,603^A0N,25,24^FH\\^FDRECEIVED DATE^FS\n")
-                    .append("^FT20,645^A0N,35,35^FB380,1,0,C,0^FH\\^FD").append(params[2]).append("^FS\n")
+                    .append("^FT20,645^A0N,38,38^FB380,1,0,C,0^FH\\^FD").append(params[2]).append("^FS\n")
                     // Pallet ID Section
                     .append("^FT20,711^A0N,25,24^FH\\^FDPALLET ID^FS\n")
                     .append("^FT20,764^A0N,35,35^FH\\^FD").append(params[9]).append("^FS\n")
