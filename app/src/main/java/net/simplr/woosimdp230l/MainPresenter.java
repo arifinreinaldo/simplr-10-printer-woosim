@@ -514,7 +514,7 @@ public class MainPresenter {
     }
 
     public void createZPLTest(boolean isPrinting) {
-        String param = ";S01R010046;13/11/2025;231;PKT;KFC-2511-32018;HOME KITCHEN MUG CERAMIC COFFEE 12OZ;RANDOM CUT LETTUCE ;KDFF439;SEJ301084;18/11/2025;CHILLED;CRECEIVING;PO2511-S00136;07:46:52 AM";
+        String param = ";S01R010046;13/11/2025;231;PKT;KFC-2511-32018;Random cut lettuce Random cut lettuce Random cut lettuce;RANDOM CUT LETTUCE ;KDFF439;SEJ301084;18/11/2025;CHILLED;CRECEIVING;PO2511-S00136;07:46:52 AM";
         String[] params = param.split(";");
         if (params.length < 14) {
             Log.w(TAG, "Invalid parameter format, skipping: " + param);
