@@ -457,7 +457,7 @@ public class MainPresenter {
     private static final String ZPL_START = "^XA~TA000~JSN^LT0^MNT^MTD^POI^PMN^LH0,0^JMA^PR5,5~SD20^JUS^LRN^CI0";
     private static final String ZPL_END = "^XZ";
 
-    public void printZPL(String[] paramList) {
+    public void printZPL(String[] paramList, String macAddress) {
         if (paramList == null || paramList.length == 0) {
             view.closeActivity(true, "No Data");
             return;
@@ -472,7 +472,7 @@ public class MainPresenter {
             try {
                 List<String> commands = buildZPLCommands(paramList);
 
-                connectZebra();
+                connectZebra(macAddress);
                 connected = true;
 
                 for (String command : commands) {
@@ -530,7 +530,7 @@ public class MainPresenter {
             boolean connected = false;
             try {
 
-                connectZebra();
+                connectZebra("");
                 connected = true;
                 sendZebraCommand(labelCommand);
 
@@ -771,8 +771,11 @@ public class MainPresenter {
         void registerBluetooth();
     }
 
-    public void connectZebra() throws ZebraPrinterLanguageUnknownException, ConnectionException {
+    public void connectZebra(String overrideMac) throws ZebraPrinterLanguageUnknownException, ConnectionException {
         String savedMac = spData.getString(sp_mac, "");
+        if (!overrideMac.isEmpty()) {
+            savedMac = overrideMac;
+        }
         BluetoothPrintersConnections bluetoothConnection = new BluetoothPrintersConnections();
         BluetoothConnection[] list = bluetoothConnection.getList();
         BluetoothConnection selectedDevice = null;

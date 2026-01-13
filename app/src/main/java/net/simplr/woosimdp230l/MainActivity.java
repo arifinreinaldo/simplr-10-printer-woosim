@@ -56,6 +56,7 @@ public class MainActivity extends AppCompatActivity implements MainPresenter.Vie
         printer_code = intent.getStringExtra("PRINTER_CODE");
         action = intent.getStringExtra("ACTION_PRINT");
         value = intent.getStringExtra("TXT_TO_PRINT");
+        mac = intent.getStringExtra("MAC_ADDRESS");
         arrArgs = intent.getStringArrayExtra("ARR_TO_PRINT");
         if (printer_code == null) {
             printer_code = "";
@@ -69,10 +70,16 @@ public class MainActivity extends AppCompatActivity implements MainPresenter.Vie
         if (arrArgs == null) {
             arrArgs = new String[0];
         }
+        if (mac == null) {
+            mac = "";
+        }
         if (arrArgs.length > 0) {
             PermissionX.init(this).permissions(getBluetoothPermission()).request((allGranted, grantedList, deniedList) -> {
                 if (allGranted) {
-                    presenter.printZPL(arrArgs);
+                    if (!mac.isEmpty()) {
+                        Toast.makeText(this, "Address " + mac, Toast.LENGTH_SHORT).show();
+                    }
+                    presenter.printZPL(arrArgs, mac);
                 } else {
                     Toast.makeText(this, String.join(",", deniedList), Toast.LENGTH_SHORT).show();
                 }
