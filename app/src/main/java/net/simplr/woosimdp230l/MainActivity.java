@@ -78,8 +78,10 @@ public class MainActivity extends AppCompatActivity implements MainPresenter.Vie
                 if (allGranted) {
                     if (!mac.isEmpty()) {
                         Toast.makeText(this, "Address " + mac, Toast.LENGTH_SHORT).show();
+                        presenter.printZPL(arrArgs, mac);
+                    } else {
+                        Toast.makeText(this, "Bluetooth Address is required", Toast.LENGTH_SHORT).show();
                     }
-                    presenter.printZPL(arrArgs, mac);
                 } else {
                     Toast.makeText(this, String.join(",", deniedList), Toast.LENGTH_SHORT).show();
                 }
