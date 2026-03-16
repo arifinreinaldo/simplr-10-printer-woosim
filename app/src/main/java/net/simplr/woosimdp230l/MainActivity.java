@@ -56,7 +56,7 @@ public class MainActivity extends AppCompatActivity implements MainPresenter.Vie
         printer_code = intent.getStringExtra("PRINTER_CODE");
         action = intent.getStringExtra("ACTION_PRINT");
         value = intent.getStringExtra("TXT_TO_PRINT");
-        mac = intent.getStringExtra("MAC_ADDRESS");
+        mac = intent.getStringExtra("MACADDRESS");
         arrArgs = intent.getStringArrayExtra("ARR_TO_PRINT");
         if (printer_code == null) {
             printer_code = "";
