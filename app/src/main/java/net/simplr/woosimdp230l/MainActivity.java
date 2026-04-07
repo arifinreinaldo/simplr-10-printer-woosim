@@ -34,7 +34,7 @@ public class MainActivity extends AppCompatActivity implements MainPresenter.Vie
     SharedPreferences sp;
     private final String sp_file = "woosimdp230lmac";
     private final String sp_mac = "macaddress";
-    private String mac, printer_code;
+    private String mac, printer_code, printer_name;
     private MainPresenter presenter;
     private String[] arrArgs;
     ActivityMainBinding binding;
@@ -57,6 +57,7 @@ public class MainActivity extends AppCompatActivity implements MainPresenter.Vie
         action = intent.getStringExtra("ACTION_PRINT");
         value = intent.getStringExtra("TXT_TO_PRINT");
         mac = intent.getStringExtra("MACADDRESS");
+        printer_name = intent.getStringExtra("PRINTERNAME");
         arrArgs = intent.getStringArrayExtra("ARR_TO_PRINT");
         if (printer_code == null) {
             printer_code = "";
@@ -78,7 +79,7 @@ public class MainActivity extends AppCompatActivity implements MainPresenter.Vie
                 if (allGranted) {
                     if (!mac.isEmpty()) {
                         Toast.makeText(this, "Address " + mac, Toast.LENGTH_SHORT).show();
-                        presenter.printZPL(arrArgs, mac);
+                        presenter.printZPL(arrArgs, mac, printer_name);
                     } else {
                         Toast.makeText(this, "Bluetooth Address is required", Toast.LENGTH_SHORT).show();
                     }
@@ -112,7 +113,7 @@ public class MainActivity extends AppCompatActivity implements MainPresenter.Vie
         sp = getSharedPreferences(sp_file, Context.MODE_PRIVATE);
 
         presenter = new MainPresenter(this, sp);
-//        presenter.createZPLTest(true);//for testing display zpl only
+        presenter.createZPLTest(true, "YELLOW");//for testing display zpl only
         PermissionX.init(this).permissions(getBluetoothPermission()).request((allGranted, grantedList, deniedList) -> {
             if (allGranted) {
                 adapter = new AdapterDevice(this, listDevice);

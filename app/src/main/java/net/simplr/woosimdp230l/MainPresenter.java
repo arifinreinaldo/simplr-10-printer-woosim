@@ -9,7 +9,6 @@ import android.os.Handler;
 import android.os.Looper;
 import android.util.DisplayMetrics;
 import android.util.Log;
-import android.widget.Toast;
 
 import com.dantsu.escposprinter.EscPosPrinter;
 import com.dantsu.escposprinter.connection.bluetooth.BluetoothConnection;
@@ -455,9 +454,10 @@ public class MainPresenter {
     // ZPL Template Constants
     private static final String ZPL_INIT = "CT~~CD,~CC^~CT~";
     private static final String ZPL_START = "^XA~TA000~JSN^LT0^MNY^MTD^POI^PMN^LH0,0^PR3,3~SD15^LRN^CI0";
+    private static final String ZPL_START_YELLOW = "^XA~TA000~JSN^LT0^MNY^MTD^POI^PMN^LH0,0^PR1,1~SD20^LRN^CI0";
     private static final String ZPL_END = "^XZ";
 
-    public void printZPL(String[] paramList, String macAddress) {
+    public void printZPL(String[] paramList, String macAddress, String printerName) {
         if (paramList == null || paramList.length == 0) {
             view.closeActivity(true, "No Data");
             return;
@@ -470,7 +470,7 @@ public class MainPresenter {
         executor.execute(() -> {
             boolean connected = false;
             try {
-                List<String> commands = buildZPLCommands(paramList);
+                List<String> commands = buildZPLCommands(paramList, printerName);
 
                 connectZebra(macAddress);
                 connected = true;
@@ -496,7 +496,7 @@ public class MainPresenter {
         });
     }
 
-    private List<String> buildZPLCommands(String[] paramList) {
+    private List<String> buildZPLCommands(String[] paramList, String printerName) {
         List<String> commands = new ArrayList<>(paramList.length * 50); // Pre-size
 
         for (String param : paramList) {
@@ -506,20 +506,20 @@ public class MainPresenter {
                 continue;
             }
 
-            String labelCommand = createZPLLabel(params);
+            String labelCommand = createZPLLabel(params, printerName);
             commands.add(labelCommand);
         }
 
         return commands;
     }
 
-    public void createZPLTest(boolean isPrinting) {
+    public void createZPLTest(boolean isPrinting, String printerName) {
         String param = ";S01R010046;13/11/2025;231;PKT;KFC-2511-32018;SKU-12345;Random cut lettuce Random cut lettuce Random cut lettuce;KDFF439;SEJ301084;18/11/2025;CHILLED;CRECEIVING;PO2511-S00136;07:46:52 AM";
         String[] params = param.split(";");
         if (params.length < 14) {
             Log.w(TAG, "Invalid parameter format, skipping: " + param);
         }
-        String labelCommand = createZPLLabel(params);
+        String labelCommand = createZPLLabel(params, printerName);
         Log.d(TAG, "createZPLTest: \n" + labelCommand);
         if (!isPrinting) return;
         view.showPrinting();
@@ -600,9 +600,9 @@ public class MainPresenter {
 ^PQ1,0,0,N
 ^XZ
      */
-    private String createZPLLabel(String[] params) {
+    private String createZPLLabel(String[] params, String printerName) {
         StringBuilder zpl = new StringBuilder(2000);
-        zpl.append(ZPL_INIT).append("\n").append(ZPL_START).append("\n");
+        zpl.append(ZPL_INIT).append("\n").append(printerName.equalsIgnoreCase("YELLOW") ? ZPL_START_YELLOW : ZPL_START).append("\n");
         String time = "";
         if (params.length == 15) {
             time = params[14];
