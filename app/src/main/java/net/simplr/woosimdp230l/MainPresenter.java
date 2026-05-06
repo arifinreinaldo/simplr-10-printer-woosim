@@ -880,9 +880,51 @@ public class MainPresenter {
             }
         }
 
-        zebraConn = new com.zebra.sdk.comm.BluetoothConnection(savedMac);
-        zebraConn.open();
-        instance = ZebraPrinterFactory.getInstance(zebraConn);
+        // Retry to recover from android BT classic SDP race ("read failed... read ret: -1").
+        BluetoothAdapter adapter = BluetoothAdapter.getDefaultAdapter();
+        final int maxAttempts = 3;
+        final long backoffMs = 500L;
+        ConnectionException lastErr = null;
+
+        for (int attempt = 1; attempt <= maxAttempts; attempt++) {
+            try {
+                if (adapter != null && adapter.isDiscovering()) {
+                    adapter.cancelDiscovery();
+                }
+            } catch (SecurityException ignore) {
+                // BLUETOOTH_SCAN not granted on API 31+; harmless to skip
+            }
+            if (zebraConn != null) {
+                try { zebraConn.close(); } catch (Exception ignore) {}
+                zebraConn = null;
+                instance = null;
+            }
+            try {
+                zebraConn = new com.zebra.sdk.comm.BluetoothConnection(savedMac);
+                zebraConn.open();
+                instance = ZebraPrinterFactory.getInstance(zebraConn);
+                Log.d(TAG, "connectZebra: connected on attempt " + attempt);
+                return;
+            } catch (ConnectionException ce) {
+                lastErr = ce;
+                Log.w(TAG, "connectZebra: attempt " + attempt + "/" + maxAttempts
+                        + " failed: " + ce.getMessage());
+                if (attempt < maxAttempts) {
+                    try { Thread.sleep(backoffMs); }
+                    catch (InterruptedException ie) {
+                        Thread.currentThread().interrupt();
+                        break;
+                    }
+                }
+            }
+        }
+        if (zebraConn != null) {
+            try { zebraConn.close(); } catch (Exception ignore) {}
+            zebraConn = null;
+            instance = null;
+        }
+        throw lastErr != null ? lastErr
+                : new ConnectionException("Failed to connect after " + maxAttempts + " attempts");
     }
 
     public void sendZebraCommand(String command) throws ConnectionException {
