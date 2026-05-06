@@ -829,13 +829,32 @@ public class MainPresenter {
     }
 
     private void handlePrintError(Exception e, Handler mainHandler) {
-        String errorMsg = e.getMessage();
-        Log.e(TAG, "Print error: " + errorMsg, e);
+        String technical = e.getMessage();
+        Log.e(TAG, "Print error: " + technical, e);
+
+        String friendly = friendlyMessageFor(e);
 
         mainHandler.post(() -> {
-            view.showError(errorMsg);
-            view.closeActivity(false, errorMsg);
+            view.showError(friendly);
+            view.closeActivity(false, friendly);
         });
+    }
+
+    private String friendlyMessageFor(Exception e) {
+        if (e instanceof ConnectionException) {
+            return "Couldn't connect to the printer.\n"
+                 + "Try in this order:\n"
+                 + "1. Turn the printer off and back on\n"
+                 + "2. Move closer to the printer\n"
+                 + "3. Make sure no other phone is connected to it\n"
+                 + "4. In Settings > Bluetooth, forget and re-pair the printer";
+        }
+        if (e instanceof ZebraPrinterLanguageUnknownException) {
+            return "Printer model not recognized.\n"
+                 + "Check the printer is a supported Zebra model and is powered on, then try again.";
+        }
+        String msg = e.getMessage();
+        return (msg != null && !msg.isEmpty()) ? msg : "Printing failed. Please try again.";
     }
 
     interface View {

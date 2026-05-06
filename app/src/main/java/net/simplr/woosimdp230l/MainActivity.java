@@ -217,7 +217,7 @@ public class MainActivity extends AppCompatActivity implements MainPresenter.Vie
 //        data.putExtra("message", message);
 //        setResult(RESULT_OK, data);
         if (!message.isEmpty()) {
-            Toast.makeText(getApplicationContext(), message, Toast.LENGTH_SHORT).show();
+            Toast.makeText(getApplicationContext(), message, Toast.LENGTH_LONG).show();
         }
         Intent resultIntent = new Intent();
         resultIntent.putExtra("selected_value", "sukses");
@@ -229,7 +229,7 @@ public class MainActivity extends AppCompatActivity implements MainPresenter.Vie
 
     @Override
     public void showError(String message) {
-        Toast.makeText(getApplicationContext(), message, Toast.LENGTH_SHORT).show();
+        Toast.makeText(getApplicationContext(), message, Toast.LENGTH_LONG).show();
     }
 
     @Override
