@@ -455,7 +455,34 @@ public class MainPresenter {
     private static final String ZPL_INIT = "CT~~CD,~CC^~CT~";
     private static final String ZPL_START = "^XA~TA000~JSN^LT0^MNY^MTD^POI^PMN^LH0,0^PR3,3~SD15^LRN^CI0";
     private static final String ZPL_START_YELLOW = "^XA~TA000~JSN^LT0^MNY^MTD^POI^PMN^LH0,0^PR3,3~SD15^LRN^CI0";
+    // BROWN: same standard layout as default, darker burn (~SD22 vs ~SD15) for legibility on dark brown stock.
+    private static final String ZPL_START_BROWN = "^XA~TA000~JSN^LT0^MNY^MTD^POI^PMN^LH0,0^PR3,3~SD22^LRN^CI0";
     private static final String ZPL_END = "^XZ";
+
+    /**
+     * Label color variant, resolved from the Intent's PRINTERNAME extra. Each variant
+     * carries its own start command, whose {@code ~SD} value sets print darkness:
+     * BROWN burns darker for legibility on dark brown stock. DEFAULT and BROWN render
+     * the standard 4-inch body; YELLOW renders the corner-bracket body.
+     */
+    private enum LabelVariant {
+        DEFAULT(ZPL_START),
+        YELLOW(ZPL_START_YELLOW),
+        BROWN(ZPL_START_BROWN);
+
+        final String start;
+
+        LabelVariant(String start) {
+            this.start = start;
+        }
+
+        /** Null-safe: an absent/unknown PRINTERNAME falls back to DEFAULT. */
+        static LabelVariant from(String printerName) {
+            if ("YELLOW".equalsIgnoreCase(printerName)) return YELLOW;
+            if ("BROWN".equalsIgnoreCase(printerName)) return BROWN;
+            return DEFAULT;
+        }
+    }
 
     public void printZPL(String[] paramList, String macAddress, String printerName) {
         if (paramList == null || paramList.length == 0) {
@@ -602,13 +629,34 @@ public class MainPresenter {
      */
     private String createZPLLabel(String[] params, String printerName) {
         StringBuilder zpl = new StringBuilder(2000);
-        boolean isYellow = printerName.equalsIgnoreCase("YELLOW");
-        zpl.append(ZPL_INIT).append("\n").append(isYellow ? ZPL_START_YELLOW : ZPL_START).append("\n");
-        String time = "";
-        if (params.length == 15) {
-            time = params[14];
-        }
+
+        // Variant carries its own start command (and thus print darkness); see LabelVariant.
+        LabelVariant variant = LabelVariant.from(printerName);
+        zpl.append(ZPL_INIT).append("\n").append(variant.start).append("\n");
+
+        String time = (params.length == 15) ? params[14] : "";
+
         if (isThreeInch) {
+            // DEPRECATED layout — retained for legacy callers (see appendThreeInchBody).
+            appendThreeInchBody(zpl, params, time);
+        } else if (variant == LabelVariant.YELLOW) {
+            appendYellowBody(zpl, params, time);
+        } else {
+            // DEFAULT and BROWN share the standard 4-inch body; they differ only in
+            // print darkness, already applied via the start command above.
+            appendStandardBody(zpl, params, time);
+        }
+
+        zpl.append(ZPL_END);
+        return zpl.toString();
+    }
+
+    /**
+     * DEPRECATED: 3-inch (PW609) layout. Retained for legacy callers only and
+     * superseded by the 4-inch {@link #appendStandardBody}. Do not extend.
+     */
+    @Deprecated
+    private void appendThreeInchBody(StringBuilder zpl, String[] params, String time) {
             zpl.append("^MMT\n")
                     .append("^PW609\n")
                     .append("^LL0812\n")
@@ -669,8 +717,9 @@ public class MainPresenter {
                     .append("^FT250,785^BCN,,N,N\n")
                     .append("^FD>:").append(params[9]).append("^FS\n")
                     .append("^PQ1,0,0,N\n");
-        } else {
-            if (isYellow) {
+    }
+
+    private void appendYellowBody(StringBuilder zpl, String[] params, String time) {
                 zpl.append("^MMT\n")
                         .append("^PW812\n")
                         .append("^LL0812\n")
@@ -761,7 +810,9 @@ public class MainPresenter {
                         .append("^FT350,785^BCN,,N,N\n")
                         .append("^FD>:").append(params[9]).append("^FS\n")
                         .append("^PQ1,0,0,N\n");
-            } else {
+    }
+
+    private void appendStandardBody(StringBuilder zpl, String[] params, String time) {
                 zpl.append("^MMT\n")
                         .append("^PW812\n")
                         .append("^LL0812\n")
@@ -821,11 +872,6 @@ public class MainPresenter {
                         .append("^FT350,785^BCN,,N,N\n")
                         .append("^FD>:").append(params[9]).append("^FS\n")
                         .append("^PQ1,0,0,N\n");
-            }
-        }
-        zpl.append(ZPL_END);
-
-        return zpl.toString();
     }
 
     private void handlePrintError(Exception e, Handler mainHandler) {
