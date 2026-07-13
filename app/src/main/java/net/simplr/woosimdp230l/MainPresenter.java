@@ -455,8 +455,8 @@ public class MainPresenter {
     private static final String ZPL_INIT = "CT~~CD,~CC^~CT~";
     private static final String ZPL_START = "^XA~TA000~JSN^LT0^MNY^MTD^POI^PMN^LH0,0^PR3,3~SD15^LRN^CI0";
     private static final String ZPL_START_YELLOW = "^XA~TA000~JSN^LT0^MNY^MTD^POI^PMN^LH0,0^PR3,3~SD15^LRN^CI0";
-    // BROWN: same standard layout as default, darker burn (~SD22 vs ~SD15) for legibility on dark brown stock.
-    private static final String ZPL_START_BROWN = "^XA~TA000~JSN^LT0^MNY^MTD^POI^PMN^LH0,0^PR3,3~SD25^LRN^CI0";
+    // BROWN: same standard layout as default, darker burn (~SD30 vs ~SD15) for legibility on dark brown stock.
+    private static final String ZPL_START_BROWN = "^XA~TA000~JSN^LT0^MNY^MTD^POI^PMN^LH0,0^PR3,3~SD30^LRN^CI0";
     private static final String ZPL_END = "^XZ";
 
     /**

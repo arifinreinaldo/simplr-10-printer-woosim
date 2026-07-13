@@ -4,9 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Android app (`net.simplr.woosimdp230l`, versionName 1.6) that acts as a **headless print bridge**: external apps fire an Intent at `MainActivity`, the app connects to a Bluetooth thermal printer, prints, returns a result, and closes itself. There is effectively no interactive UI beyond a one-time device picker and loading/printing animations.
+Android app (`net.simplr.woosimdp230l`, versionName 2.0) that acts as a **headless print bridge**: external apps fire an Intent at `MainActivity`, the app connects to a Bluetooth thermal printer, prints, returns a result, and closes itself. There is effectively no interactive UI beyond a one-time device picker and loading/printing animations.
 
-Despite the package name (`woosimdp230l`), the **current primary use case is printing warehouse receiving labels to Zebra printers via ZPL**. The Woosim/Honeywell/ESC-POS/Dascom code paths still exist but are dormant in the active Intent flow (see "Active vs. dormant paths" below). The branch `connection-update` is focused on Zebra Bluetooth connection reliability.
+Despite the package name (`woosimdp230l`), the **current primary use case is printing warehouse receiving labels to Zebra printers via ZPL**. The Woosim/Honeywell/ESC-POS/Dascom code paths still exist but are dormant in the active Intent flow (see "Active vs. dormant paths" below).
 
 ## Build & Test
 
@@ -59,16 +59,16 @@ The app reports back via `setResult` + `finish()`/`finishAffinity()` in the `Vie
 
 Indexes 0, 1, 8, 12 are present in the delimited string but unused by the label (see the sample in `createZPLTest`). The SKU (idx 6) and pallet id (idx 9) are also rendered as Code 128 barcodes.
 
-**Three layout variants**, selected inside `createZPLLabel`:
-- `isThreeInch == true` → 3-inch layout, `^PW609`.
-- `printerName.equalsIgnoreCase("YELLOW")` → 4-inch "yellow" layout, `^PW812`, decorative corner-bracket borders. Selected by passing `PRINTERNAME=YELLOW` in the Intent.
-- default → standard 4-inch layout, `^PW812`, solid outer border.
+**Variants** are modeled by the private `LabelVariant` enum (DEFAULT / YELLOW / BROWN), resolved null-safely from the Intent's `PRINTERNAME` extra. Each variant carries its own ZPL start command whose `~SD` value sets print darkness. Layout selection inside `createZPLLabel`:
+- `isThreeInch == true` → `appendThreeInchBody`, `^PW609`. **`@Deprecated`** — retained for legacy callers only; do not extend.
+- YELLOW → `appendYellowBody`, 4-inch, `^PW812`, decorative corner-bracket borders.
+- DEFAULT and BROWN → `appendStandardBody`, 4-inch, `^PW812`, solid outer border. BROWN differs from DEFAULT **only** in a darker burn (`~SD30` vs `~SD15`) for legibility on dark brown stock — same body.
 
-When editing layouts, edit the matching branch only — the three are independent literal ZPL builders and share nothing but the field indices. `createZPLTest()` is a **dev-only** helper with a hardcoded sample row and hardcoded MAC `90:75:DE:17:58:19`; it's wired to a commented line in `MainActivity.onCreate`. Don't ship it enabled.
+When editing layouts, edit the matching `append*Body` method only — they are independent literal ZPL builders and share nothing but the field indices. A darkness-only change belongs in the variant's `ZPL_START_*` constant, not the body. `createZPLTest(isPrinting, printerName)` is a **dev-only** helper with a hardcoded sample row and hardcoded MAC `90:75:DE:17:58:19`; it's wired to a commented line in `MainActivity.onCreate`. Don't ship it enabled.
 
 ## Zebra connection reliability (`connectZebra`)
 
-The recent work on this branch. `connectZebra(overrideMac)` retries up to **3 times with 500ms backoff** to recover from the Android BT-classic SDP race (`"read failed... read ret: -1"`). Each attempt cancels active discovery and closes/nulls any stale `zebraConn`/`instance` before reopening. It throws the last `ConnectionException` if all attempts fail. `handlePrintError` → `friendlyMessageFor` maps exceptions to user-facing recovery steps (power-cycle, move closer, re-pair). Preserve this retry+cleanup shape when touching Zebra connect logic.
+`connectZebra(overrideMac)` retries up to **3 times with 500ms backoff** to recover from the Android BT-classic SDP race (`"read failed... read ret: -1"`). Each attempt cancels active discovery and closes/nulls any stale `zebraConn`/`instance` before reopening. It throws the last `ConnectionException` if all attempts fail. `handlePrintError` → `friendlyMessageFor` maps exceptions to user-facing recovery steps (power-cycle, move closer, re-pair). Preserve this retry+cleanup shape when touching Zebra connect logic.
 
 ## Active vs. dormant paths
 
