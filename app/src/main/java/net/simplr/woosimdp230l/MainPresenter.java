@@ -22,6 +22,7 @@ import com.dascom.print.ZPL;
 import com.dascom.print.utils.BluetoothUtils;
 import com.woosim.printer.WoosimCmd;
 import com.zebra.sdk.comm.ConnectionException;
+import com.zebra.sdk.printer.PrinterStatus;
 import com.zebra.sdk.printer.ZebraPrinter;
 import com.zebra.sdk.printer.ZebraPrinterFactory;
 import com.zebra.sdk.printer.ZebraPrinterLanguageUnknownException;
@@ -31,10 +32,12 @@ import net.simplr.woosimdp230l.sunmi.SunmiPrintHelper;
 import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import honeywell.connection.ConnectionBase;
 import honeywell.connection.Connection_Bluetooth;
@@ -74,6 +77,11 @@ public class MainPresenter {
     int retry = 0;
     ZebraPrinter instance;
     com.zebra.sdk.comm.BluetoothConnection zebraConn;
+    // Guards against a second print Intent starting a concurrent ZPL job, which can
+    // double-print the same label. STATIC on purpose: startActivityForResult always
+    // creates a new MainActivity (singleTop is bypassed when a result is expected),
+    // so each tap gets a new presenter — a per-instance guard would never trip.
+    private static final AtomicBoolean zplJobRunning = new AtomicBoolean(false);
 
     MainPresenter(View view, SharedPreferences sp) {
         this.view = view;
@@ -492,37 +500,169 @@ public class MainPresenter {
             return;
         }
 
+        // A retry Intent arriving during the (slow) connect/retry window must not start
+        // a second concurrent job — that is one source of duplicate physical labels.
+        if (!zplJobRunning.compareAndSet(false, true)) {
+            Log.w(TAG, "printZPL: job already running, ignoring duplicate request");
+            // closeActivity, not showError: this duplicate Intent spawned a fresh activity
+            // that must finish and answer its caller, or it stays on screen forever.
+            view.closeActivity(false, "Still printing - can take up to a minute.\nPlease wait...");
+            return;
+        }
+
         view.showPrinting();
         ExecutorService executor = Executors.newSingleThreadExecutor();
         Handler mainHandler = new Handler(Looper.getMainLooper());
 
         executor.execute(() -> {
             boolean connected = false;
+            int sent = 0;
+            int total = 0;
             try {
                 List<String> commands = buildZPLCommands(paramList, printerName);
+                total = commands.size();
 
                 connectZebra(macAddress);
                 connected = true;
 
+                // A paused/head-open/out-of-media printer still buffers ZPL and replays
+                // it once fixed — the "error toast, then prints double" report. Refuse
+                // to send until the printer is actually ready.
+                checkPrinterReady();
+
                 for (String command : commands) {
                     sendZebraCommand(command);
+                    sent++;
                 }
 
-                mainHandler.post(() -> view.closeActivity(true, ""));
+                // Success must be visible: silent success is what made users re-tap
+                // and duplicate labels in the field.
+                final String doneMsg = (total == 1)
+                        ? "Label sent to printer"
+                        : total + " labels sent to printer";
+                mainHandler.post(() -> view.closeActivity(true, doneMsg));
 
             } catch (Exception e) {
-                handlePrintError(e, mainHandler);
+                handlePrintError(e, mainHandler, connected, sent, total);
             } finally {
                 if (connected) {
-                    try {
-                        closeZebraCommand();
-                    } catch (Exception e) {
-                        Log.e(TAG, "Error closing Zebra connection", e);
-                    }
+                    closeZebraCommand(); // never throws
                 }
+                zplJobRunning.set(false);
                 executor.shutdown();
             }
         });
+    }
+
+    /**
+     * Throws with a state-specific user message when the printer would accept data
+     * without printing it. A sleeping printer wakes on connect but can take a few
+     * seconds to report ready, so a transient not-ready/failed query is polled a few
+     * times before deciding. Hard faults a human must fix (cover open, out of labels,
+     * paused) fail immediately. If the status channel never answers at all, fail
+     * closed: a silent printer is the one that buffers the label and replays it
+     * later as a surprise duplicate.
+     */
+    private void checkPrinterReady() throws PrinterNotReadyException {
+        final int maxPolls = 4;
+        final long pollDelayMs = 1000L;
+        // Keep the last ANSWERED status: an observed not-ready must not be erased by a
+        // later failed poll, or we would send into a stalled printer that buffers the
+        // label and replays it later (the double-label bug).
+        PrinterStatus lastAnswered = null;
+
+        // ponytail: cap the status read timeout so four dead polls cost ~9s instead
+        // of ~23s; the original value is restored below for the label send.
+        final int prevReadTimeout = zebraConn.getMaxTimeoutForRead();
+        try {
+            zebraConn.setMaxTimeoutForRead(1500);
+            for (int i = 1; i <= maxPolls; i++) {
+                try {
+                    lastAnswered = instance.getCurrentStatus();
+                    if (lastAnswered.isReadyToPrint) {
+                        return;
+                    }
+                    if (lastAnswered.isHeadOpen || lastAnswered.isPaperOut
+                            || lastAnswered.isPaused || lastAnswered.isRibbonOut) {
+                        break; // waiting won't fix these; a human has to act
+                    }
+                } catch (Exception e) {
+                    // possibly still waking from sleep; keep polling
+                    Log.w(TAG, "checkPrinterReady: status query failed (poll " + i + "/"
+                            + maxPolls + "): " + e.getMessage());
+                }
+                if (i < maxPolls) {
+                    try {
+                        Thread.sleep(pollDelayMs);
+                    } catch (InterruptedException ie) {
+                        Thread.currentThread().interrupt();
+                        break;
+                    }
+                }
+            }
+        } finally {
+            zebraConn.setMaxTimeoutForRead(prevReadTimeout);
+        }
+
+        if (lastAnswered == null) {
+            // Fail closed: a silent printer is the one that buffers this label and
+            // replays it later as a surprise duplicate. The power-cycle instructed
+            // below also clears that buffer.
+            Log.w(TAG, "checkPrinterReady: no status response, refusing to send");
+            throw new PrinterNotReadyException("Printer is not responding.\n"
+                    + "Turn it off and on, then print again.");
+        }
+        Log.w(TAG, "checkPrinterReady: not ready - headOpen=" + lastAnswered.isHeadOpen
+                + " paperOut=" + lastAnswered.isPaperOut + " paused=" + lastAnswered.isPaused
+                + " ribbonOut=" + lastAnswered.isRibbonOut + " headTooHot=" + lastAnswered.isHeadTooHot
+                + " bufferFull=" + lastAnswered.isReceiveBufferFull
+                + " queuedFormats=" + lastAnswered.numberOfFormatsInReceiveBuffer);
+        throw new PrinterNotReadyException(notReadyMessageFor(lastAnswered));
+    }
+
+    /**
+     * One short, state-specific message per fault. Android 12+ truncates toasts to
+     * two lines, so the action must fit in the first two lines of every message.
+     */
+    static String notReadyMessageFor(PrinterStatus s) {
+        if (s.isHeadOpen) {
+            return "Printer cover is open.\n"
+                    + "Close the cover, then print again.";
+        }
+        if (s.isPaperOut) {
+            return "Printer is out of labels.\n"
+                    + "Load a new roll, then print again.";
+        }
+        if (s.isPaused) {
+            if (s.numberOfFormatsInReceiveBuffer > 0) {
+                return "Printer paused, " + s.numberOfFormatsInReceiveBuffer
+                        + " label(s) already waiting.\n"
+                        + "Un-pause it - do NOT print again.";
+            }
+            return "Printer is paused.\n"
+                    + "Press PAUSE (or FEED) on it, then print again.";
+        }
+        if (s.isRibbonOut) {
+            return "Printer ribbon is out.\n"
+                    + "Replace the ribbon, then print again.";
+        }
+        if (s.isHeadTooHot) {
+            return "Printer is too hot.\n"
+                    + "Wait a minute, then print again.";
+        }
+        if (s.isReceiveBufferFull) {
+            return "Printer is stuck with pending labels.\n"
+                    + "Turn it off and on - do NOT print again yet.";
+        }
+        return "Printer not ready (may be waking up).\n"
+                + "Wait a few seconds, then print again.";
+    }
+
+    /** Nothing was sent to the printer when this is thrown; safe to reprint. */
+    static class PrinterNotReadyException extends Exception {
+        PrinterNotReadyException(String friendlyMessage) {
+            super(friendlyMessage);
+        }
     }
 
     private List<String> buildZPLCommands(String[] paramList, String printerName) {
@@ -567,14 +707,10 @@ public class MainPresenter {
                 mainHandler.post(() -> view.closeActivity(true, ""));
 
             } catch (Exception e) {
-                handlePrintError(e, mainHandler);
+                handlePrintError(e, mainHandler, connected, 0, 1);
             } finally {
                 if (connected) {
-                    try {
-                        closeZebraCommand();
-                    } catch (Exception e) {
-                        Log.e(TAG, "Error closing Zebra connection", e);
-                    }
+                    closeZebraCommand(); // never throws
                 }
                 executor.shutdown();
             }
@@ -876,26 +1012,39 @@ public class MainPresenter {
                 .append("^PQ1,0,0,N\n");
     }
 
-    private void handlePrintError(Exception e, Handler mainHandler) {
+    private void handlePrintError(Exception e, Handler mainHandler, boolean dataMayHaveReachedPrinter,
+                                  int sentCount, int totalCount) {
         String technical = e.getMessage();
         Log.e(TAG, "Print error: " + technical, e);
 
-        String friendly = friendlyMessageFor(e);
+        String friendly = friendlyMessageFor(e, dataMayHaveReachedPrinter, sentCount, totalCount);
 
-        mainHandler.post(() -> {
-            view.showError(friendly);
-            view.closeActivity(false, friendly);
-        });
+        // closeActivity toasts the message itself; an extra showError would show it twice.
+        mainHandler.post(() -> view.closeActivity(false, friendly));
     }
 
-    private String friendlyMessageFor(Exception e) {
+    // Android 12+ truncates toasts to two lines: every message must carry its action
+    // in the first two lines. Extra detail below that only shows on older devices.
+    private String friendlyMessageFor(Exception e, boolean dataMayHaveReachedPrinter,
+                                      int sentCount, int totalCount) {
+        if (e instanceof PrinterNotReadyException) {
+            return e.getMessage();
+        }
         if (e instanceof ConnectionException) {
+            // Post-connect failure: label bytes may already be in the printer's
+            // buffer, so "couldn't connect" would mislead the user into reprinting.
+            if (dataMayHaveReachedPrinter) {
+                if (sentCount > 0 && totalCount > 1) {
+                    return "Sent " + sentCount + " of " + totalCount + " labels, then lost the printer.\n"
+                            + "CHECK WHAT PRINTED - reprint only missing labels.";
+                }
+                return "Connection lost while sending.\n"
+                        + "CHECK THE PRINTER - print again only if nothing comes out.";
+            }
             return "Couldn't connect to the printer.\n"
-                    + "Try in this order:\n"
-                    + "1. Turn the printer off and back on\n"
-                    + "2. Move closer to the printer\n"
-                    + "3. Make sure no other phone is connected to it\n"
-                    + "4. In Settings > Bluetooth, forget and re-pair the printer";
+                    + "Turn it off and on, move closer, then print again.\n"
+                    + "Still failing? Make sure no other phone is connected,\n"
+                    + "or forget and re-pair it in Settings > Bluetooth.";
         }
         if (e instanceof ZebraPrinterLanguageUnknownException) {
             return "Printer model not recognized.\n"
@@ -932,43 +1081,63 @@ public class MainPresenter {
         void registerBluetooth();
     }
 
-    public void connectZebra(String overrideMac) throws ZebraPrinterLanguageUnknownException, ConnectionException {
+    public void connectZebra(String overrideMac)
+            throws ZebraPrinterLanguageUnknownException, ConnectionException, PrinterNotReadyException {
         String savedMac = spData.getString(sp_mac, "");
-        if (!overrideMac.isEmpty()) {
+        if (overrideMac != null && !overrideMac.isEmpty()) {
             savedMac = overrideMac;
         }
-        BluetoothPrintersConnections bluetoothConnection = new BluetoothPrintersConnections();
-        BluetoothConnection[] list = bluetoothConnection.getList();
-        BluetoothConnection selectedDevice = null;
-        for (int i = 0; i < list.length; i++) {
-            BluetoothConnection con = list[i];
-            if (con.getDevice().getAddress().equals(savedMac)) {
-                selectedDevice = con;
+
+        // Fail fast with an accurate message: retrying open() burns up to ~30s and
+        // then blames the printer when the real problem is the phone's radio or a
+        // bad MACADDRESS extra from the calling app.
+        BluetoothAdapter adapter = BluetoothAdapter.getDefaultAdapter();
+        if (adapter == null || !adapter.isEnabled()) {
+            throw new PrinterNotReadyException("Bluetooth is off on this phone.\n"
+                    + "Turn Bluetooth on, then print again.");
+        }
+        savedMac = savedMac.toUpperCase(Locale.ROOT);
+        if (!BluetoothAdapter.checkBluetoothAddress(savedMac)) {
+            throw new PrinterNotReadyException(savedMac.isEmpty()
+                    ? "No printer selected.\nOpen this app once to pick a printer, then print again."
+                    : "Invalid printer address \"" + savedMac + "\".\nFix the printer setup in the calling app.");
+        }
+
+        // A never-paired MAC can't be a working printer here (the picker only lists
+        // bonded devices): fail fast instead of burning 3 slow open() attempts.
+        try {
+            BluetoothDevice device = adapter.getRemoteDevice(savedMac);
+            if (device.getBondState() != BluetoothDevice.BOND_BONDED) {
+                throw new PrinterNotReadyException("Printer is not paired with this phone.\n"
+                        + "Pair it in Settings > Bluetooth, then print again.\n"
+                        + "Printer: " + savedMac);
             }
+        } catch (SecurityException se) {
+            // BLUETOOTH_CONNECT denied: open() below would fail the same way but with
+            // a technical message. Name the real cause instead.
+            throw new PrinterNotReadyException("Bluetooth permission is missing.\n"
+                    + "Allow 'Nearby devices' for this app in Settings, then print again.");
         }
 
         // Retry to recover from android BT classic SDP race ("read failed... read ret: -1").
-        BluetoothAdapter adapter = BluetoothAdapter.getDefaultAdapter();
         final int maxAttempts = 3;
         final long backoffMs = 500L;
+        // ponytail: 3s refusal threshold is a field guess; tune after the 2-phone test.
+        final long fastRefusalMs = 3000L;
         ConnectionException lastErr = null;
+        int failedAttempts = 0;
+        boolean allRefusedFast = true;
 
         for (int attempt = 1; attempt <= maxAttempts; attempt++) {
             try {
-                if (adapter != null && adapter.isDiscovering()) {
+                if (adapter.isDiscovering()) {
                     adapter.cancelDiscovery();
                 }
             } catch (SecurityException ignore) {
                 // BLUETOOTH_SCAN not granted on API 31+; harmless to skip
             }
-            if (zebraConn != null) {
-                try {
-                    zebraConn.close();
-                } catch (Exception ignore) {
-                }
-                zebraConn = null;
-                instance = null;
-            }
+            closeZebraQuietly(); // never reuse a half-open socket from a failed attempt
+            final long attemptStart = System.currentTimeMillis();
             try {
                 // Insecure RFCOMM: avoids the secure-channel handshake that races on
                 // rapid printer switches (3-color fleet) and throws "read ret: -1".
@@ -977,10 +1146,22 @@ public class MainPresenter {
                 instance = ZebraPrinterFactory.getInstance(zebraConn);
                 Log.d(TAG, "connectZebra: connected on attempt " + attempt);
                 return;
+            } catch (ZebraPrinterLanguageUnknownException | RuntimeException fatal) {
+                // Not retryable. Close the socket or it leaks: each print gets a new
+                // presenter, so a socket this instance abandons is unreachable and
+                // holds the printer's single BT slot until the process dies — the
+                // NEXT print then fails to connect.
+                closeZebraQuietly();
+                throw fatal;
             } catch (ConnectionException ce) {
                 lastErr = ce;
+                failedAttempts++;
+                final long elapsed = System.currentTimeMillis() - attemptStart;
+                if (elapsed >= fastRefusalMs) {
+                    allRefusedFast = false; // slow timeout = printer off / out of range
+                }
                 Log.w(TAG, "connectZebra: attempt " + attempt + "/" + maxAttempts
-                        + " failed: " + ce.getMessage());
+                        + " failed after " + elapsed + "ms: " + ce.getMessage());
                 if (attempt < maxAttempts) {
                     try {
                         Thread.sleep(backoffMs);
@@ -991,13 +1172,14 @@ public class MainPresenter {
                 }
             }
         }
-        if (zebraConn != null) {
-            try {
-                zebraConn.close();
-            } catch (Exception ignore) {
-            }
-            zebraConn = null;
-            instance = null;
+        closeZebraQuietly();
+        // Every attempt refused fast, with Bluetooth on and the printer paired:
+        // something answered and said no. Zebra BT printers take one connection at a
+        // time, so the usual culprit is another phone holding it. A slow timeout means
+        // off/out of range instead — that keeps the generic ConnectionException below.
+        if (failedAttempts == maxAttempts && allRefusedFast) {
+            throw new PrinterNotReadyException("Printer is in use by another phone.\n"
+                    + "Close printing there or power-cycle the printer, then print again.");
         }
         throw lastErr != null ? lastErr
                 : new ConnectionException("Failed to connect after " + maxAttempts + " attempts");
@@ -1007,11 +1189,20 @@ public class MainPresenter {
         instance.sendCommand(command);
     }
 
-    public void closeZebraCommand() throws ConnectionException {
-        if (instance != null) {
-            zebraConn.close();
-            zebraConn = null;
-            instance = null;
+    public void closeZebraCommand() {
+        closeZebraQuietly();
+    }
+
+    /** Close and null the Zebra connection; never throws, safe to call in any state. */
+    private void closeZebraQuietly() {
+        if (zebraConn != null) {
+            try {
+                zebraConn.close();
+            } catch (Exception e) {
+                Log.w(TAG, "closeZebraQuietly: " + e.getMessage());
+            }
         }
+        zebraConn = null;
+        instance = null;
     }
 }

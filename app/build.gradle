@@ -6,8 +6,8 @@ android {
         minSdkVersion 21
         compileSdk 33
         targetSdkVersion 33
-        versionCode 10
-        versionName "2.0"
+        versionCode 11
+        versionName "2.1"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -43,4 +43,5 @@ dependencies {
     implementation 'com.afollestad:recyclical:1.1.1'
     def lottieVersion = "4.2.2"
     implementation "com.airbnb.android:lottie:$lottieVersion"
+    testImplementation 'junit:junit:4.13.2'
 }
